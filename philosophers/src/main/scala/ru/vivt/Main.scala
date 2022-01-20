@@ -7,32 +7,54 @@ import akka.actor.typed.scaladsl.ActorContext
 import akka.actor.typed.scaladsl.Behaviors
 import ru.vivt.Data.{countPhilosopher, typeScenario}
 
-class Main(context: ActorContext[String]) extends AbstractBehavior[String](context) {
-  override def onMessage(msg: String): Behavior[String] =
+class Main(context: ActorContext[Message]) extends AbstractBehavior[Message](context) {
+  val forks = Array.fill(countPhilosopher)(true)
+  var philosophers: Array[ActorRef[Message]] = null
+
+  override def onMessage(msg: Message): Behavior[Message] =
     msg match {
-      case "start" =>
-        val forks = Array.fill(countPhilosopher)(true)
+      case Start() =>
 
 
         def contextSpawn(name: String, forkLeft: Int, forkRight: Int) = {
-          context.spawn(Philosopher(name, forks, forkLeft, forkRight), name)
+          context.spawn(Philosopher(name, context.self, forkLeft, forkRight), name)
         }
 
-        val philosophers: Array[ActorRef[Message]] = (0 until countPhilosopher).map(
+        philosophers = (0 until countPhilosopher).map(
           i => contextSpawn(s"Name$i", i, (i + 1) % countPhilosopher)
         ).toArray
-        val state: ActorRef[Message] = context.spawn(State(forks, philosophers), "state")
-        forks.zipWithIndex.map((_, i) => state ! ForkFree(i, null))
 
-
+        forks.zipWithIndex.foreach((_, i) =>
+          philosophers.foreach(philosopher => philosopher ! ForkFree(i, context.self))
+        )
 
         this
+      case ForkGet(i, philosopher) =>
+        if (forks(i)) {
+          forks(i) = false
+          philosopher ! ForkSet(i, context.self)
+        }
+        this
+      case ForkPut(i, _) =>
+        if (!forks(i)) {
+          forks(i) = true
+          philosophers.foreach(other =>
+            if(forks(i)) other ! ForkFree(i, context.self)
+          )
+        }
+        this
+      case ForkFree(i, _) => {
+        philosophers.foreach(other =>
+          if(forks(i)) other ! ForkFree(i, context.self)
+        )
+        this
+      }
     }
 }
 
 
 object Main {
-  def apply(): Behavior[String] =
+  def apply(): Behavior[Message] =
     Behaviors.setup(context => new Main(context))
 }
 
@@ -43,7 +65,7 @@ object ProblemAboutPhilosophers {
     }
 
     val actorSystem = ActorSystem(Main(), "system")
-    actorSystem ! "start"
+    actorSystem ! Start()
   }
 }
 
