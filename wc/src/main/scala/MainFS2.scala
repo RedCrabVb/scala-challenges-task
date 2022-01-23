@@ -15,13 +15,26 @@ def Main(name: String) = {
       new FileInputStream(name)
     }, chunkSize = 4096, closeAfterUse = true)
 
-  val maxLine = file
+  val lineSize = file
     .through(text.utf8Decode)
     .through(text.lines)
     .map(_.length)
+    .compile.toList
 
-  val result = {
-    maxLine.compile.toList.map(_.max)
-  }
-  println(result.unsafeRunSync())
+  val countLine =
+    lineSize
+      .map(_.size)
+
+  val maxLine = lineSize
+    .map(_.max)
+
+  val charCount = lineSize
+    .map(_.sum)
+
+  val resultCountLine: Int = countLine.unsafeRunSync().toInt - 1
+  val resultCountChar: Int = charCount.unsafeRunSync() + resultCountLine
+
+  println("CountLine: " + resultCountLine)
+  println("MaxLine: " + maxLine.unsafeRunSync())
+  println("CountChar: " + resultCountChar)
 }
