@@ -7,8 +7,6 @@ import java.io.FileInputStream
 
 @main
 def Main(name: String) = {
-  //Pure, emit - Чистый, излучающий
-  //through, Pipe - через, трубка
 
   val file: Stream[IO, Byte] =
     fs2.io.readInputStream(IO {
@@ -19,22 +17,20 @@ def Main(name: String) = {
     .through(text.utf8Decode)
     .through(text.lines)
     .map(_.length)
-    .compile.toList
 
-  val countLine =
-    lineSize
-      .map(_.size)
+  val countLine = lineSize.fold(1)((prev, next) => prev + 1)
 
   val maxLine = lineSize
-    .map(_.max)
+    .fold(0)((prev, next) => Math.max(next, prev))
 
-  val charCount = lineSize
-    .map(_.sum)
+  val charCount = (first: Int) => lineSize
+    .fold(first)((prev, next) => prev + next)
 
-  val resultCountLine: Int = countLine.unsafeRunSync().toInt - 1
-  val resultCountChar: Int = charCount.unsafeRunSync() + resultCountLine
+  val resultCountLine = countLine.compile.toList.map(_.head).unsafeRunSync().toInt
+  val resultCountByte = charCount(resultCountLine).compile.toList.map(_.head).unsafeRunSync().toInt
+  val resultMaxLine = maxLine.compile.toList.map(_.head).unsafeRunSync().toInt
 
   println("CountLine: " + resultCountLine)
-  println("MaxLine: " + maxLine.unsafeRunSync())
-  println("CountChar: " + resultCountChar)
+  println("MaxLine: " + resultMaxLine)
+  println("CountByte: " + resultCountByte)
 }
