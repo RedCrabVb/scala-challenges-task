@@ -10,4 +10,4 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor-typed" % AkkaVersion
 )
 
-mainClass in assembly := Some("ru.vivt.Main")
+mainClass in assembly := Some("ru.vivt.ProblemAboutPhilosophers")

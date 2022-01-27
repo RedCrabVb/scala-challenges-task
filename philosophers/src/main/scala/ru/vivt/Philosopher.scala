@@ -11,14 +11,16 @@ import scala.concurrent.duration.DurationInt
 import scala.sys.exit
 import scala.util.Random
 
+import ru.vivt.Data
 
 sealed trait Message
 final case class ForkFree(i: Int, main: ActorRef[Message]) extends Message
 final case class ForkPut(i: Int, state: ActorRef[Message]) extends Message
 final case class ForkGet(i: Int, philosopher: ActorRef[Message]) extends Message
+final case class ForkGetTwo(i: Int, j: Int, philosopher: ActorRef[Message]) extends Message
 final case class ForkSet(i: Int, main: ActorRef[Message]) extends Message
 
-final case class Start() extends Message
+case object Start extends Message
 
 object Philosopher {
   def apply(name: String, main: ActorRef[Message], forkLeft: Int, forkRight: Int): Behavior[Message] = {
@@ -55,7 +57,10 @@ class Philosopher(name: String, main: ActorRef[Message], forkLeft: Int, forkRigh
   override def onMessage(msg: Message): Behavior[Message] =
     msg match {
       case ForkFree(i, state) if i == forkRight || i == forkLeft =>
-        main ! ForkGet(i, context.self)
+        main ! (Data.typeScenarioGet() match {
+          case 0 => ForkGet(i, context.self)
+          case 1 => ForkGetTwo(forkLeft, forkRight, context.self)
+        })
         this
       case ForkFree(_, _) => this
       case ForkSet(i, state) if i == forkRight || i == forkLeft =>

@@ -7,6 +7,11 @@ import akka.actor.typed.scaladsl.ActorContext
 import akka.actor.typed.scaladsl.Behaviors
 import ru.vivt.Data.{countPhilosopher, typeScenario}
 
+import java.util.concurrent.TimeUnit
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+import scala.concurrent.duration.DurationInt
+
 class Main(context: ActorContext[Message]) extends AbstractBehavior[Message](context) {
   def contextSpawn(name: String, forkLeft: Int, forkRight: Int): ActorRef[Message] = {
     context.spawn(Philosopher(name, context.self, forkLeft, forkRight), name)
@@ -71,6 +76,10 @@ object ProblemAboutPhilosophers {
 
     val main = ActorSystem(Main(), "main")
     main ! Start
+
+    Thread.sleep(5000)
+    main.terminate()
+    println("Stop")
   }
 }
 
