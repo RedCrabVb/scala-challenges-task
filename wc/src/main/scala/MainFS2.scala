@@ -18,19 +18,17 @@ def Main(name: String) = {
     .through(text.lines)
     .map(_.length)
 
-  val countLine = lineSize.fold(1)((prev, next) => prev + 1)
+  val countLine: Stream[IO, Int] = lineSize.fold(0)((prev, next) => prev + 1)
 
-  val maxLine = lineSize
+  val maxLine: Stream[IO, Int] = lineSize
     .fold(0)((prev, next) => Math.max(next, prev))
 
-  val charCount = (first: Int) => lineSize
+  val charCount: Int => Stream[IO, Int] = (first: Int) => lineSize
     .fold(first)((prev, next) => prev + next)
 
-  val resultCountLine = countLine.compile.toList.map(_.head).unsafeRunSync().toInt
-  val resultCountByte = charCount(resultCountLine).compile.toList.map(_.head).unsafeRunSync().toInt
-  val resultMaxLine = maxLine.compile.toList.map(_.head).unsafeRunSync().toInt
+  val result = countLine.onComplete(maxLine).onComplete(charCount(0)).compile.toList.unsafeRunSync()
 
-  println("CountLine: " + resultCountLine)
-  println("MaxLine: " + resultMaxLine)
-  println("CountByte: " + resultCountByte)
+  println("CountLine: " + (result(0).toInt - 1))
+  println("MaxLine: " + result(1))
+  println("CountChar: " + (result(2).toInt + result(0).toInt - 1))
 }
