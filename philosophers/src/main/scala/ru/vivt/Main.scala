@@ -8,31 +8,34 @@ import akka.actor.typed.scaladsl.Behaviors
 import ru.vivt.Data.{countPhilosopher, typeScenario}
 
 class Main(context: ActorContext[Message]) extends AbstractBehavior[Message](context) {
-  val forks = Array.fill(countPhilosopher)(true)
-  var philosophers: Array[ActorRef[Message]] = null
+  def contextSpawn(name: String, forkLeft: Int, forkRight: Int): ActorRef[Message] = {
+    context.spawn(Philosopher(name, context.self, forkLeft, forkRight), name)
+  }
+
+  val forks: Array[Boolean] = Array.fill(countPhilosopher)(true)
+  var philosophers: Array[ActorRef[Message]] = (0 until countPhilosopher).map(
+    i => contextSpawn(s"Name$i", i, (i + 1) % countPhilosopher)
+  ).toArray
 
   override def onMessage(msg: Message): Behavior[Message] =
     msg match {
-      case Start() =>
-
-
-        def contextSpawn(name: String, forkLeft: Int, forkRight: Int) = {
-          context.spawn(Philosopher(name, context.self, forkLeft, forkRight), name)
-        }
-
-        philosophers = (0 until countPhilosopher).map(
-          i => contextSpawn(s"Name$i", i, (i + 1) % countPhilosopher)
-        ).toArray
-
+      case Start =>
         forks.zipWithIndex.foreach((_, i) =>
           philosophers.foreach(philosopher => philosopher ! ForkFree(i, context.self))
         )
-
         this
       case ForkGet(i, philosopher) =>
         if (forks(i)) {
           forks(i) = false
           philosopher ! ForkSet(i, context.self)
+        }
+        this
+      case ForkGetTwo(i, j, philosopher) =>
+        if (forks(i) && forks(j)) {
+          forks(i) = false
+          forks(j) = false
+          philosopher ! ForkSet(i, context.self)
+          philosopher ! ForkSet(j, context.self)
         }
         this
       case ForkPut(i, _) =>
@@ -43,12 +46,11 @@ class Main(context: ActorContext[Message]) extends AbstractBehavior[Message](con
           )
         }
         this
-      case ForkFree(i, _) => {
+      case ForkFree(i, _) =>
         philosophers.foreach(other =>
           if(forks(i)) other ! ForkFree(i, context.self)
         )
         this
-      }
     }
 }
 
@@ -60,12 +62,15 @@ object Main {
 
 object ProblemAboutPhilosophers {
   def main(args: Array[String]): Unit = {
-    if (args.length > 0 && args(0).toInt == 1) {
-      typeScenario = 1
-    }
 
-    val actorSystem = ActorSystem(Main(), "system")
-    actorSystem ! Start()
+    Data(args(0) match {
+      case "block" => 0
+      case "notblock" => 1
+      case _ => ???
+    })
+
+    val main = ActorSystem(Main(), "main")
+    main ! Start
   }
 }
 
