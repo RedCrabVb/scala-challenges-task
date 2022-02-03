@@ -6,19 +6,54 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 import cats.syntax.all.catsSyntaxApplicativeId
 
+final case class TodoItem(id: Int,
+                          text: String,
+                          label: String,
+                          files: List[FileItem],
+                          session: String
+                         )
+
+final case class TodoItemTmp(text: String, label: String, session: String)
+
+final case class FileItem(path: String)
+
+final case class LabelItem(name: String, list: List[TodoItem])
+
+final case class User(login: String, password: String) {
+  def getSession: String = {
+    (login.hashCode + password.hashCode).toString
+  }
+}
+
+
 object Storage:
   private var items: List[TodoItem] = List[TodoItem]()
+  private var users: List[User] = List[User]()
 
-  def list[F[_]](using Sync[F]): F[List[TodoItem]] =
+  def getAllItems[F[_]](using Sync[F]): F[List[TodoItem]] =
     items.pure
 
-  def prepend[F[_]: Concurrent](item: TodoItemTmp): F[TodoItem] = Concurrent[F].pure{
-    val newItem = TodoItem(items.size + 1, item.text, item.label, List())
+  def prependItems[F[_]: Concurrent](item: TodoItemTmp): F[TodoItem] = Concurrent[F].pure{
+    val sessionIsReal = null != users.find(_.getSession == item.session).orNull
+    if (!sessionIsReal) {
+      throw new Exception("Not found user")
+    }
+    val newItem = TodoItem(items.size + 1, item.text, item.label, List(), item.session)
     items = newItem :: items
     newItem
   }
 
   //todo: sort by id, status, countFile
-  def sort[F[_]: Sync]: F[Unit] = {
+  def sortItems[F[_]: Sync]: F[Unit] = {
     items = items.sortBy(_.text)
   }.pure
+
+
+
+  def registration[F[_]: Concurrent](user: User): F[Unit] = Concurrent[F].pure{
+    users = user :: users
+  }
+
+  def authorization[F[_]: Concurrent](userForCheck: User): F[Boolean] = Concurrent[F].pure{
+    null != users.find(user => user.getSession == userForCheck.getSession).orNull
+  }

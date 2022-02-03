@@ -16,18 +16,21 @@ import ru.neoflex.Config
 import ru.neoflex.server.{TodoItem, TodoItemTmp}
 import io.circe.generic.auto.*
 import io.circe.syntax.*
+import cats.effect.unsafe.implicits.global
 
 import scala.io.StdIn.readLine
+
+import ru.neoflex.server.User
 
 sealed class Command
 final case class SendNote(name: String, label: String) extends Command
 final case class RemoveFile() extends Command
 final case class UploadFile() extends Command
-final case class Authorization() extends Command
-final case class Registration() extends Command
+final case class Authorization(login: String, password: String) extends Command
+final case class Registration(login: String, password: String) extends Command
 
 object UI {
-  def start() = {
+  def start(): Unit = {
     println(
       """
         |In the program you can:
@@ -49,15 +52,24 @@ object UI {
         |""".stripMargin)
     val commandStr = readLine()
     commandStr match {
-      case "1" => {
+      case "1" =>
         println("Enter name note")
         val name = readLine()
         println("Enter label note")
         val label = readLine()
         SendNote(name, label)
-      }
-      case "2" => Authorization()
-      case "3" => Registration()
+      case "2" =>
+        println("Enter your login")
+        val login = readLine()
+        println("Enter your password")
+        val password = readLine()
+        Authorization(login, password)
+      case "3" =>
+        println("Enter your login")
+        val login = readLine()
+        println("Enter your password")
+        val password = readLine()
+        Registration(login, password)
       case "4" => RemoveFile()
       case "5" => UploadFile()
       case _ => ???
@@ -71,30 +83,56 @@ object UI {
 // UI for select file load/download,
 // UI for show user todoItem
 object TodoClient extends IOApp with Config:
+  var user: User = null
 
   def run(args: List[String]): IO[ExitCode] =
     BlazeClientBuilder[IO].resource.use { client =>
       UI.start()
-      val command = UI.selectOperation()
-      val post = command match {
-        case SendNote(name, label) => {
-          val item = TodoItemTmp(name, label)
-          val itemApi = Uri.fromString(baseUrl + "/item").getOrElse(???)
-          val postTodoItem = POST(
-            item,
-            itemApi
-          )
-          (postTodoItem, baseUrl+"/items")
+      while (true) {
+        val command = UI.selectOperation()
+        val post = command match {
+          case SendNote(name, label) =>
+            val userSession = Option(user).getOrElse(User("_", "_")).getSession
+            val item = TodoItemTmp(name, label, userSession)
+            val itemApi = Uri.fromString(baseUrl + "/item").getOrElse(???)
+            val postTodoItem = POST(
+              item,
+              itemApi
+            )
+            (postTodoItem, baseUrl + "/items")
+          case Registration(login, password) =>
+            user = User(login, password)
+            val itemApi = Uri.fromString(baseUrl + "/registration").getOrElse(???)
+            val postTodoItem = POST(
+              user,
+              itemApi
+            )
+            (postTodoItem, baseUrl + "/items")
+          case Authorization(login, password) =>
+            val user = User(login, password)
+            val itemApi = Uri.fromString(baseUrl + "/authorization").getOrElse(???)
+            val postTodoItem = POST(
+              user,
+              itemApi
+            )
+            (postTodoItem, baseUrl + "/items")
+          case _ => ???
         }
-        case _ => ???
-      }
 
-      for
-        status <- client.status(post._1)
-        _ <- IO{ println(s"Post status: $status") }
-        items <- client.expect[List[TodoItem]](post._2)
-        _ <- IO{ println("Answer: " + items.mkString(" ")) }
-      yield
-        ExitCode.Success
+        val request: IO[ExitCode] = for
+          status <- client.status(post._1)
+          _ <- IO {
+            println(s"Post status: $status")
+          }
+          items <- client.expect[List[TodoItem]](post._2)
+          _ <- IO {
+            println("Answer: " + items.mkString(" "))
+          }
+        yield
+          ExitCode.Success
+
+        request.unsafeRunSync()
+      }
+      ???
     }
 
