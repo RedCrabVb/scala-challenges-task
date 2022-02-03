@@ -92,7 +92,7 @@ object TodoClient extends IOApp with Config:
       for
         status <- client.status(post._1)
         _ <- IO{ println(s"Post status: $status") }
-        items <- client.expect[List[TodoItemTmp]](post._2)
+        items <- client.expect[List[TodoItem]](post._2)
         _ <- IO{ println("Answer: " + items.mkString(" ")) }
       yield
         ExitCode.Success

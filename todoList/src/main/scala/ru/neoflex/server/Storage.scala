@@ -12,8 +12,10 @@ object Storage:
   def list[F[_]](using Sync[F]): F[List[TodoItem]] =
     items.pure
 
-  def prepend[F[_]: Concurrent](item: TodoItemTmp): F[Unit] = Concurrent[F].pure{
-    items = TodoItem(items.size + 1, item.text, item.label, List()) :: items
+  def prepend[F[_]: Concurrent](item: TodoItemTmp): F[TodoItem] = Concurrent[F].pure{
+    val newItem = TodoItem(items.size + 1, item.text, item.label, List())
+    items = newItem :: items
+    newItem
   }
 
   //todo: sort by id, status, countFile

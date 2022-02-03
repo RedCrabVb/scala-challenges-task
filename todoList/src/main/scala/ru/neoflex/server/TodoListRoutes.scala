@@ -52,9 +52,9 @@ trait TodoListRoutes[F[_]]:
       case req @ POST -> Root / "item" =>
         for
           item <- req.as[TodoItemTmp]
-          _ <- (println(s"Item: $item")).pure
-          _ <- Storage.prepend(item)
-          resp <- Ok(item)
+          newItem <- Storage.prepend(item)
+          _ <- (println(s"Item: $newItem")).pure
+          resp <- Ok(newItem)
         yield
           resp
     }
