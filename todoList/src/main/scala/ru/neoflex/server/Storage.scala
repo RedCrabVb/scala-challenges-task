@@ -48,6 +48,9 @@ object Storage:
 
 
   def registration[F[_]: Concurrent](user: User): F[Unit] = Concurrent[F].pure{
+    if (users.map(_.login).contains(user.login)) {
+      throw new Exception("Use with this login already exist")
+    }
     users = user :: users
   }
 

@@ -17,6 +17,7 @@ import ru.neoflex.server.{TodoItem, TodoItemTmp, User}
 import io.circe.generic.auto.*
 import io.circe.syntax.*
 import cats.effect.unsafe.implicits.global
+import ru.neoflex.clinet.TodoClient.user
 
 import scala.io.StdIn.readLine
 
@@ -38,10 +39,38 @@ final case class Registration(login: String, password: String) extends Command
 // UI for select file load/download,
 // UI for show user todoItem
 object TodoClient extends IOApp with Config :
-  var user: User = User("none", "none")
+  var user: User = null
 
   def run(args: List[String]): IO[ExitCode] =
     BlazeClientBuilder[IO].resource.use { client =>
+      UI.start()
+      while(user == null) {
+        val command =UI.authorization()
+        val post = command match {
+          case Registration(login, password) =>
+            val user = User(login, password)
+            val itemApi = Uri.fromString(baseUrl + "/registration").getOrElse(???)
+            val postTodoItem = POST(
+              user,
+              itemApi
+            )
+            (postTodoItem, user)
+          case Authorization(login, password) =>
+            val user = User(login, password)
+            val itemApi = Uri.fromString(baseUrl + "/authorization").getOrElse(???)
+            val postTodoItem = POST(
+              user,
+              itemApi
+            )
+            (postTodoItem, user)
+        }
+
+        if (client.successful(post._1).unsafeRunSync() == true) {
+          user = post._2
+        }
+      }
+
+
       def sendRequest[F](post: Request[IO]): IO[ExitCode] = {
         for
           status <- client.status(post)
@@ -50,8 +79,6 @@ object TodoClient extends IOApp with Config :
           ExitCode.Success
       }
 
-
-      UI.start()
       while (true) {
         val command = UI.selectOperation()
         val post = command match {
@@ -64,22 +91,7 @@ object TodoClient extends IOApp with Config :
               itemApi
             )
             postTodoItem
-          case Registration(login, password) =>
-            user = User(login, password)
-            val itemApi = Uri.fromString(baseUrl + "/registration").getOrElse(???)
-            val postTodoItem = POST(
-              user,
-              itemApi
-            )
-            postTodoItem
-          case Authorization(login, password) =>
-            val user = User(login, password)
-            val itemApi = Uri.fromString(baseUrl + "/authorization").getOrElse(???)
-            val postTodoItem = POST(
-              user,
-              itemApi
-            )
-            postTodoItem
+
           case _ => ???
         }
 
