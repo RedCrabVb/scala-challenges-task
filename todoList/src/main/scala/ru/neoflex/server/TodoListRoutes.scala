@@ -46,16 +46,16 @@ trait TodoListRoutes[F[_]]:
         for
           user <- req.as[User]
           result <- Storage.authorization(user)
-          _ <- (println(s"authorization for $user: $result")).pure
-          resp <- Ok(result)
+          _ <- println(s"authorization for $user").pure
+          resp <- Ok(user)
         yield
           resp
       case req @ POST -> Root / "registration" =>
         for
           user <- req.as[User]
           result <- Storage.registration(user)
-          _ <- (println(s"registration for $user: $result")).pure
-          resp <- Ok(result)
+          _ <- println(s"registration for $user").pure
+          resp <- Ok(user)
         yield
           resp
     }

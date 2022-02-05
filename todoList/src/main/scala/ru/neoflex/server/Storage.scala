@@ -34,10 +34,7 @@ object Storage:
     items.pure
 
   def prependItems[F[_]: Concurrent](item: TodoItemTmp): F[TodoItem] = Concurrent[F].pure{
-    val sessionIsReal = null != users.find(_.getSession == item.session).orNull
-    if (!sessionIsReal) {
-      throw new Exception("Not found user")
-    }
+    users.find(_.getSession == item.session).getOrElse(throw new Exception("Not found user"))
     val newItem = TodoItem(items.size + 1, item.text, item.label, List(), item.session)
     items = newItem :: items
     newItem
@@ -54,6 +51,9 @@ object Storage:
     users = user :: users
   }
 
-  def authorization[F[_]: Concurrent](userForCheck: User): F[Boolean] = Concurrent[F].pure{
-    null != users.find(user => user.getSession == userForCheck.getSession).orNull
+  def authorization[F[_]: Concurrent](userForCheck: User): F[Unit] = Concurrent[F].pure{
+    val realAccount = users.map(_.getSession).contains(userForCheck.getSession)
+    if (!realAccount) {
+      throw new NoSuchElementException()
+    }
   }
