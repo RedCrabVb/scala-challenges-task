@@ -25,6 +25,8 @@ sealed class Command
 
 final case class SendNote(name: String, label: String) extends Command
 
+final case class ShowNote() extends Command
+
 final case class RemoveFile() extends Command
 
 final case class UploadFile() extends Command
@@ -46,6 +48,7 @@ object TodoClient extends IOApp with Config :
       UI.start()
       while(user == null) {
         val command =UI.authorization()
+        //fixme: code duplication
         val post = command match {
           case Registration(login, password) =>
             val user = User(login, password)
@@ -81,21 +84,33 @@ object TodoClient extends IOApp with Config :
 
       while (true) {
         val command = UI.selectOperation()
-        val post = command match {
+        val request: IO[ExitCode] = command match {
           case SendNote(name, label) =>
             val userSession = user.getSession
             val item = TodoItemTmp(name, label, userSession)
-            val itemApi = Uri.fromString(baseUrl + "/item").getOrElse(???)
+            val itemApiAdd = Uri.fromString(baseUrl + "/item").getOrElse(???)
             val postTodoItem = POST(
               item,
-              itemApi
+              itemApiAdd
             )
-            postTodoItem
-
+            for
+              status <- client.status(postTodoItem)
+              _ <- IO.println(s"Post status: $status")
+            yield
+              ExitCode.Success
+          case ShowNote() => {
+            val itemApiShow = Uri.fromString(baseUrl + "/itemShow").getOrElse(???)
+            val postTodoItems = GET(
+              user,
+              itemApiShow
+            )
+            for {
+              list <- client.expect[List[TodoItem]](postTodoItems)
+              _ <- IO.println(list)
+            } yield ExitCode.Success
+          }
           case _ => ???
         }
-
-        val request: IO[ExitCode] = sendRequest(post)
 
         request.unsafeRunSync()
       }

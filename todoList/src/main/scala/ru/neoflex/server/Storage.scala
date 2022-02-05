@@ -30,8 +30,9 @@ object Storage:
   private var items: List[TodoItem] = List[TodoItem]()
   private var users: List[User] = List[User]()
 
-  def getAllItems[F[_]](using Sync[F]): F[List[TodoItem]] =
-    items.pure
+  def getAllItems[F[_]](user: User)(using Concurrent[F]): F[List[TodoItem]] = {
+    items.filter(_.session == user.getSession).pure
+  }
 
   def prependItems[F[_]: Concurrent](item: TodoItemTmp): F[TodoItem] = Concurrent[F].pure{
     users.find(_.getSession == item.session).getOrElse(throw new Exception("Not found user"))

@@ -21,11 +21,18 @@ trait TodoListRoutes[F[_]]:
   import dsl.*
 
   //todo: url load file, url remove file
-  def todoListRoutes(using Sync[F]): HttpRoutes[F] =
+  def todoListRoutes(using Concurrent[F]): HttpRoutes[F] =
     HttpRoutes.of[F] {
-      case GET -> Root / "items" =>
+//      case GET -> Root / "items" =>
+//        for
+//          items <- Storage.getAllItems[F] //todo: prohibition of receiving other peoples records
+//          resp <- Ok(items)
+//        yield
+//          resp
+      case req @ GET -> Root / "itemShow" =>
         for
-          items <- Storage.getAllItems[F] //todo: prohibition of receiving other peoples records
+          user <- req.as[User]
+          items <- Storage.getAllItems[F](user) //todo: prohibition of receiving other peoples records
           resp <- Ok(items)
         yield
           resp

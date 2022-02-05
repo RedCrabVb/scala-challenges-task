@@ -42,7 +42,7 @@ object UI {
     println(
       """
         |1. Send note
-        |---2. Authorization---
+        |2. Show notes
         |---3. Registration---
         |4. Remove file
         |5. Upload file
@@ -55,6 +55,7 @@ object UI {
         println("Enter label note")
         val label = readLine()
         SendNote(name, label)
+      case "2" => ShowNote()
       case "4" => RemoveFile()
       case "5" => UploadFile()
       case _ => ???
