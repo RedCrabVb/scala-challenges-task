@@ -46,6 +46,7 @@ object UI {
         |---3. Registration---
         |4. Remove file
         |5. Upload file
+        |6. Exit
         |""".stripMargin)
     val commandStr = readLine()
     commandStr match {
@@ -58,6 +59,7 @@ object UI {
       case "2" => ShowNote()
       case "4" => RemoveFile()
       case "5" => UploadFile()
+      case "6" => Exit()
       case _ => ???
     }
   }

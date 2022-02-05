@@ -10,8 +10,8 @@ import ru.neoflex.Config
 object TodoServer extends IOApp with TodoListRoutes[IO] with Config:
 
   val app = (
-    todoListRoutes <+>
-      todoListModifyRoutes
+    itemsRoutes <+>
+      authorizationRoutes
     ).orNotFound
 
   val server = BlazeServerBuilder[IO]
@@ -19,8 +19,7 @@ object TodoServer extends IOApp with TodoListRoutes[IO] with Config:
     .withHttpApp(app)
 
   val serverResource = server.resource
-  // if we want to run server in parallel:
-  //  val fiber = serverResource.use(_ => IO.never).start.unsafeRunSync()
+
 
   def run(args: List[String]): IO[ExitCode] =
     server

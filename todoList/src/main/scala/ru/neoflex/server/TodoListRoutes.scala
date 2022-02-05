@@ -20,27 +20,15 @@ trait TodoListRoutes[F[_]]:
   val dsl: Http4sDsl[F] = Http4sDsl[F]
   import dsl.*
 
-  //todo: url load file, url remove file
-  def todoListRoutes(using Concurrent[F]): HttpRoutes[F] =
+  def itemsRoutes(using Concurrent[F]): HttpRoutes[F] =
     HttpRoutes.of[F] {
-//      case GET -> Root / "items" =>
-//        for
-//          items <- Storage.getAllItems[F] //todo: prohibition of receiving other peoples records
-//          resp <- Ok(items)
-//        yield
-//          resp
       case req @ GET -> Root / "itemShow" =>
         for
           user <- req.as[User]
-          items <- Storage.getAllItems[F](user) //todo: prohibition of receiving other peoples records
+          items <- Storage.getAllItems[F](user)
           resp <- Ok(items)
         yield
           resp
-    }
-
-  //todo: rename method, add authentication
-  def todoListModifyRoutes(using Concurrent[F]): HttpRoutes[F] =
-    HttpRoutes.of[F] {
       case req @ POST -> Root / "item" =>
         for
           item <- req.as[TodoItemTmp]
@@ -49,6 +37,11 @@ trait TodoListRoutes[F[_]]:
           resp <- Ok(newItem)
         yield
           resp
+    }
+
+  def authorizationRoutes(using Concurrent[F]): HttpRoutes[F] =
+    HttpRoutes.of[F] {
+
       case req @ POST -> Root / "authorization" =>
         for
           user <- req.as[User]

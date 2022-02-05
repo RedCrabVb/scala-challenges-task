@@ -18,6 +18,7 @@ import io.circe.generic.auto.*
 import io.circe.syntax.*
 import cats.effect.unsafe.implicits.global
 import ru.neoflex.clinet.TodoClient.user
+import scala.util.control.Breaks._
 
 import scala.io.StdIn.readLine
 
@@ -35,11 +36,12 @@ final case class Authorization(login: String, password: String) extends Command
 
 final case class Registration(login: String, password: String) extends Command
 
+final case class Exit() extends Command
 
-//todo: registration in app,
+
+//todo:
 // enter data for load on server,
 // UI for select file load/download,
-// UI for show user todoItem
 object TodoClient extends IOApp with Config :
   var user: User = null
 
@@ -82,37 +84,40 @@ object TodoClient extends IOApp with Config :
           ExitCode.Success
       }
 
-      while (true) {
-        val command = UI.selectOperation()
-        val request: IO[ExitCode] = command match {
-          case SendNote(name, label) =>
-            val userSession = user.getSession
-            val item = TodoItemTmp(name, label, userSession)
-            val itemApiAdd = Uri.fromString(baseUrl + "/item").getOrElse(???)
-            val postTodoItem = POST(
-              item,
-              itemApiAdd
-            )
-            for
-              status <- client.status(postTodoItem)
-              _ <- IO.println(s"Post status: $status")
-            yield
-              ExitCode.Success
-          case ShowNote() => {
-            val itemApiShow = Uri.fromString(baseUrl + "/itemShow").getOrElse(???)
-            val postTodoItems = GET(
-              user,
-              itemApiShow
-            )
-            for {
-              list <- client.expect[List[TodoItem]](postTodoItems)
-              _ <- IO.println(list)
-            } yield ExitCode.Success
+      breakable {
+        while (true) {
+          val command = UI.selectOperation()
+          val request: IO[ExitCode] = command match {
+            case SendNote(name, label) =>
+              val userSession = user.getSession
+              val item = TodoItemTmp(name, label, userSession)
+              val itemApiAdd = Uri.fromString(baseUrl + "/item").getOrElse(???)
+              val postTodoItem = POST(
+                item,
+                itemApiAdd
+              )
+              for
+                status <- client.status(postTodoItem)
+                _ <- IO.println(s"Post status: $status")
+              yield
+                ExitCode.Success
+            case ShowNote() => {
+              val itemApiShow = Uri.fromString(baseUrl + "/itemShow").getOrElse(???)
+              val postTodoItems = GET(
+                user,
+                itemApiShow
+              )
+              for {
+                list <- client.expect[List[TodoItem]](postTodoItems)
+                _ <- IO.println(list)
+              } yield ExitCode.Success
+            }
+            case Exit() => break()
+            case _ => ???
           }
-          case _ => ???
-        }
 
-        request.unsafeRunSync()
+          request.unsafeRunSync()
+        }
       }
       IO(ExitCode.Success)
     }
