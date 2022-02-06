@@ -17,33 +17,13 @@ import ru.neoflex.server.{TodoItem, TodoItemTmp, User}
 import io.circe.generic.auto.*
 import io.circe.syntax.*
 import cats.effect.unsafe.implicits.global
-import ru.neoflex.clinet.TodoClient.{baseUrl, user}
+import ru.neoflex.clinet.TodoClient.{baseUrl}
 
 import scala.util.control.Breaks.*
 import scala.io.StdIn.readLine
-import Api._
-
-sealed class Command
-
-final case class SendNote(name: String, text: String, label: String) extends Command
-
-final case class ShowNote() extends Command
-
-final case class ShowNoteFilter(api: Uri) extends Command
-
-final case class EditNote(id: Int, name: String, text: String, label: String, status: Boolean) extends Command
-
-final case class RemoveFile() extends Command
-
-final case class UploadFile() extends Command
-
-final case class Authorization(login: String, password: String) extends Command
-
-final case class Registration(login: String, password: String) extends Command
-
-final case class Exit() extends Command
-
-
+import Api.*
+import ru.neoflex.clinet.Cache._
+import ru.neoflex.clinet.{Authorization}
 
 
 //todo:
@@ -51,8 +31,6 @@ final case class Exit() extends Command
 // UI for select file load/download,
 // set status note
 object TodoClient extends IOApp with Config :
-  var user: User = _
-  var notes: List[TodoItem] = _
 
   def run(args: List[String]): IO[ExitCode] =
     BlazeClientBuilder[IO].resource.use { client =>
@@ -109,8 +87,8 @@ object TodoClient extends IOApp with Config :
               )
               for {
                 list <- client.expect[List[TodoItem]](postTodoItems)
-                _ <- IO.delay( { notes = list })
-                _ <- IO.println(list)
+                _ <- IO.delay( { Cache.notes = list })
+                _ <- IO.println(UI.printTodoItem(list))
               } yield ExitCode.Success
             case EditNote(id, name, text, label, status) =>
               val updateNote = TodoItemTmp(name, text, label, status, user.getSession)
@@ -132,8 +110,8 @@ object TodoClient extends IOApp with Config :
               )
               for {
                 list <- client.expect[List[TodoItem]](postTodoItems)
-                _ <- IO.delay( { notes = list })
-                _ <- IO.println(list)
+                _ <- IO.delay( { Cache.notes = list })
+                _ <- IO.println(UI.printTodoItem(list))
               } yield ExitCode.Success
             }
             case _ => ???
