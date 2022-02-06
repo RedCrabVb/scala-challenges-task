@@ -41,15 +41,21 @@ object Storage:
   }
 
   def prependItems[F[_]: Concurrent](item: TodoItemTmp): F[TodoItem] = Concurrent[F].pure{
-    users.find(_.getSession == item.session).getOrElse(throw new Exception("Not found user"))
+    checkSession(item.session)
 
     val newItem = TodoItem(items.size + 1, item.name, item.text, item.label, false, List(), item.session)
     items = newItem :: items
     newItem
   }
 
+  def deleteNote[F[_]: Concurrent](user: User, id: Int): F[Unit] = Concurrent[F].pure{
+    checkSession(user.getSession)
+
+    items.filter(_.id != id)
+  }
+
   def editItems[F[_]: Concurrent](itemTmp: TodoItemTmp, id: Int): F[TodoItem] = Concurrent[F].pure{
-    users.find(_.getSession == itemTmp.session).getOrElse(throw new Exception("Not found user"))
+    checkSession(itemTmp.session)
 
     val itemInDB = items.filter(_.id == id).head
     val item = TodoItem(id, itemTmp.name, itemTmp.text, itemTmp.label, itemTmp.status, itemInDB.files, itemInDB.session)
@@ -59,12 +65,10 @@ object Storage:
 
 
   def sortItems[F[_]: Concurrent](f: TodoItem => String, session: String): F[List[TodoItem]] = Concurrent[F].pure{
-    users.find(_.getSession == session).getOrElse(throw new Exception("Not found user"))
+    checkSession(session)
 
     items.filter(_.session == session).sortBy(f)
   }
-
-
 
   def registration[F[_]: Concurrent](user: User): F[Unit] = Concurrent[F].pure{
     if (users.map(_.login).contains(user.login)) {
@@ -78,4 +82,8 @@ object Storage:
     if (!realAccount) {
       throw new NoSuchElementException()
     }
+  }
+
+  def checkSession(session: String): Unit = {
+    users.find(_.getSession == session).getOrElse(throw new Exception("Not found user"))
   }

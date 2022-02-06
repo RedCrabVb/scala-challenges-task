@@ -29,7 +29,6 @@ import ru.neoflex.clinet.{Authorization}
 //todo:
 // enter data for load on server,
 // UI for select file load/download,
-// set status note
 object TodoClient extends IOApp with Config :
 
   def run(args: List[String]): IO[ExitCode] =

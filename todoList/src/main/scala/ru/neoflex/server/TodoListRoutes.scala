@@ -16,10 +16,6 @@ import ru.neoflex.server.User
 
 import java.util.Date
 
-// todo:
-// set status note
-// set label
-// edit note
 trait TodoListRoutes[F[_]]:
   val dsl: Http4sDsl[F] = Http4sDsl[F]
   import dsl.*
