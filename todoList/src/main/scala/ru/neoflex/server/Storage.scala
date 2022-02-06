@@ -6,15 +6,6 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 import cats.syntax.all.catsSyntaxApplicativeId
 
-/**
- * @param id
- * @param name
- * @param text
- * @param label
- * @param status
- * @param files
- * @param session
- */
 final case class TodoItem(id: Int,
                           name: String,
                           text: String,
@@ -45,6 +36,10 @@ object Storage:
     items.filter(_.session == user.getSession).pure
   }
 
+  def getItemsWithLabel[F[_]](user: User, filter: TodoItem => Boolean)(using Concurrent[F]): F[List[TodoItem]] = {
+    items.filter(item => item.session == user.getSession && filter(item)).pure
+  }
+
   def prependItems[F[_]: Concurrent](item: TodoItemTmp): F[TodoItem] = Concurrent[F].pure{
     users.find(_.getSession == item.session).getOrElse(throw new Exception("Not found user"))
 
@@ -63,9 +58,11 @@ object Storage:
   }
 
   //todo: sort by id, status, countFile
-  def sortItems[F[_]: Sync]: F[Unit] = {
-    items = items.sortBy(_.text)
-  }.pure
+  def sortItems[F[_]: Concurrent](f: TodoItem => String, session: String): F[List[TodoItem]] = Concurrent[F].pure{
+    users.find(_.getSession == session).getOrElse(throw new Exception("Not found user"))
+
+    items.filter(_.session == session).sortBy(f)
+  }
 
 
 

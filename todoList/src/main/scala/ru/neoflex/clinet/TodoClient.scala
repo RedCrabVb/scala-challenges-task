@@ -17,16 +17,19 @@ import ru.neoflex.server.{TodoItem, TodoItemTmp, User}
 import io.circe.generic.auto.*
 import io.circe.syntax.*
 import cats.effect.unsafe.implicits.global
-import ru.neoflex.clinet.TodoClient.user
-import scala.util.control.Breaks._
+import ru.neoflex.clinet.TodoClient.{baseUrl, user}
 
+import scala.util.control.Breaks.*
 import scala.io.StdIn.readLine
+import Api._
 
 sealed class Command
 
 final case class SendNote(name: String, text: String, label: String) extends Command
 
 final case class ShowNote() extends Command
+
+final case class ShowNoteFilter(api: Uri) extends Command
 
 final case class EditNote(id: Int, name: String, text: String, label: String, status: Boolean) extends Command
 
@@ -41,13 +44,15 @@ final case class Registration(login: String, password: String) extends Command
 final case class Exit() extends Command
 
 
+
+
 //todo:
 // enter data for load on server,
 // UI for select file load/download,
 // set status note
 object TodoClient extends IOApp with Config :
-  var user: User = null
-  var notes: List[TodoItem] = null
+  var user: User = _
+  var notes: List[TodoItem] = _
 
   def run(args: List[String]): IO[ExitCode] =
     BlazeClientBuilder[IO].resource.use { client =>
@@ -58,7 +63,6 @@ object TodoClient extends IOApp with Config :
         val post = command match {
           case Registration(login, password) =>
             val user = User(login, password)
-            val registrationApi = Uri.fromString(baseUrl + "/registration").getOrElse(???)
             val postTodoItem = POST(
               user,
               registrationApi
@@ -66,15 +70,16 @@ object TodoClient extends IOApp with Config :
             (postTodoItem, user)
           case Authorization(login, password) =>
             val user = User(login, password)
-            val authorizationApi = Uri.fromString(baseUrl + "/authorization").getOrElse(???)
+
             val postTodoItem = POST(
               user,
               authorizationApi
             )
             (postTodoItem, user)
+          case _ => throw new Exception
         }
 
-        if (client.successful(post._1).unsafeRunSync() == true) {
+        if (client.successful(post._1).unsafeRunSync()) {
           user = post._2
         }
       }
@@ -87,7 +92,7 @@ object TodoClient extends IOApp with Config :
             case SendNote(name, text, label) =>
               val userSession = user.getSession
               val item = TodoItemTmp(name, text, label, false, userSession)
-              val itemApiAdd = Uri.fromString(baseUrl + "/item").getOrElse(???)
+
               println(item.asJson)
               val postTodoItem = POST(
                 item,
@@ -98,25 +103,23 @@ object TodoClient extends IOApp with Config :
                 _ <- IO.println(s"Status: $status")
               yield
                 ExitCode.Success
-            case ShowNote() => {
-              val itemApiShow = Uri.fromString(baseUrl + "/itemShow").getOrElse(???)
+            case ShowNote() =>
+
               val postTodoItems = GET(
                 user,
                 itemApiShow
               )
               for {
                 list <- client.expect[List[TodoItem]](postTodoItems)
-                _ <- IO {notes = list}
+                _ <- IO.delay( { notes = list })
                 _ <- IO.println(list)
               } yield ExitCode.Success
-            }
             case EditNote(id, name, text, label, status) =>
               val updateNote = TodoItemTmp(name, text, label, status, user.getSession)
-              val itemApiEdit = Uri.fromString(baseUrl + "/item/edit/" + id).getOrElse(???)
 
               val editNote = POST(
                 updateNote,
-                itemApiEdit
+                itemApiEdit(id)
               )
               for
                 status <- client.status(editNote)
@@ -124,7 +127,7 @@ object TodoClient extends IOApp with Config :
               yield
                 ExitCode.Success
             case Exit() => break()
-            case _ => ???
+            case _ => throw new Exception
           }
 
           request.unsafeRunSync()

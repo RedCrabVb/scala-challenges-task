@@ -41,6 +41,36 @@ trait TodoListRoutes[F[_]]:
           resp <- Ok(newItem)
         yield
           resp
+//      case req @ POST -> Root / "item" / label =>
+//        for
+//          user <- req.as[User]
+//          items <- Storage.getItemsWithLabel[F](user, label)
+//          resp <- Ok(items)
+//        yield
+//          resp
+      case req @ POST -> Root / "item" / "filter" / filter / value => {
+        for
+          user <- req.as[User]
+          items <- Storage.getItemsWithLabel[F](user, filter match {
+            case "label" => (item: TodoItem) => item.label != value
+            case "status" => (item: TodoItem) => item.status != value.toBoolean
+          })
+          resp <- Ok(items)
+        yield
+          resp
+      }
+      case req @ POST -> Root / "item" / "sort" / sort => {
+        for
+          user <- req.as[User]
+          items <- Storage.sortItems[F](sort match {
+            case "text" => (item: TodoItem) => item.text
+            case "name" => (item: TodoItem) => item.name
+            case _ => ???
+          }, user.getSession)
+          resp <- Ok(items)
+        yield
+          resp
+      }
       case req @ POST -> Root / "item" / "edit" / id =>
         for
           item <- req.as[TodoItemTmp]

@@ -45,10 +45,11 @@ object UI {
       """
         |1. Send note
         |2. Show notes
-        |3. Edit note
-        |-4. Remove file
-        |-5. Upload file
-        |6. Exit
+        |3. Show notes with for filter
+        |4. Edit note
+        |-5. Remove file
+        |-6. Upload file
+        |7. Exit
         |""".stripMargin)
     val commandStr = readLine()
     commandStr match {
@@ -63,6 +64,24 @@ object UI {
         SendNote(name, text, label)
       case "2" => ShowNote()
       case "3" =>
+        println("Filter and sort select: ")
+        println(
+          """
+            |1. Filter label
+            |2. Sort size text
+            |3. Filter status
+            |4. Sort status""".stripMargin)
+        val select = readLine()
+        val uri = select match {
+          case "1" =>
+            println("Enter label: ")
+            Api.itemApiLabel(readLine())
+          case "2" =>
+            ???
+          case _ => ???
+        }
+        ShowNoteFilter(uri)
+      case "4" =>
         println("Enter id note")
         val id: Int = readLine().toInt
         println("Enter name note")
@@ -74,9 +93,9 @@ object UI {
         println("Task completed? true/false")
         val status = readLine().toLowerCase().toBoolean
         EditNote(id, name, text, label, status)
-      case "4" => RemoveFile()
-      case "5" => UploadFile()
-      case "6" => Exit()
+      case "5" => RemoveFile()
+      case "6" => UploadFile()
+      case "7" => Exit()
       case _ => ???
     }
   }
