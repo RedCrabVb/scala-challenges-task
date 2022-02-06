@@ -70,14 +70,21 @@ object UI {
             |1. Filter label
             |2. Sort size text
             |3. Filter status
-            |4. Sort status""".stripMargin)
+            |4. Sort on text""".stripMargin)
         val select = readLine()
         val uri = select match {
           case "1" =>
             println("Enter label: ")
-            Api.itemApiLabel(readLine())
+            val value = readLine()
+            Api.itemApiFilter("label", value)
           case "2" =>
-            ???
+            Api.itemApiSort("text")
+          case "3" =>
+            println("Enter status for filter (true/false)")
+            val statusForFilter = readLine().toLowerCase
+            Api.itemApiFilter("status", statusForFilter)
+          case "4" =>
+            Api.itemApiSort("text")
           case _ => ???
         }
         ShowNoteFilter(uri)

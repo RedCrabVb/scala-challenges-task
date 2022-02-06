@@ -92,7 +92,6 @@ object TodoClient extends IOApp with Config :
             case SendNote(name, text, label) =>
               val userSession = user.getSession
               val item = TodoItemTmp(name, text, label, false, userSession)
-
               println(item.asJson)
               val postTodoItem = POST(
                 item,
@@ -104,7 +103,6 @@ object TodoClient extends IOApp with Config :
               yield
                 ExitCode.Success
             case ShowNote() =>
-
               val postTodoItems = GET(
                 user,
                 itemApiShow
@@ -127,7 +125,18 @@ object TodoClient extends IOApp with Config :
               yield
                 ExitCode.Success
             case Exit() => break()
-            case _ => throw new Exception
+            case ShowNoteFilter(api) => {
+              val postTodoItems = GET(
+                user,
+                api
+              )
+              for {
+                list <- client.expect[List[TodoItem]](postTodoItems)
+                _ <- IO.delay( { notes = list })
+                _ <- IO.println(list)
+              } yield ExitCode.Success
+            }
+            case _ => ???
           }
 
           request.unsafeRunSync()

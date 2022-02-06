@@ -4,17 +4,14 @@ import org.http4s.Uri
 import ru.neoflex.clinet.TodoClient.baseUrl
 
 object Api {
-  private[this] val exception = new Exception("Not valid uri")
-  val registrationApi: Uri = Uri.fromString(baseUrl + "/registration").getOrElse(throw exception)
-  val authorizationApi: Uri = Uri.fromString(baseUrl + "/authorization").getOrElse(throw exception)
-  val itemApiAdd: Uri = Uri.fromString(baseUrl + "/item").getOrElse(throw exception)
-  val itemApiShow: Uri = Uri.fromString(baseUrl + "/itemShow").getOrElse(throw exception)
+  val registrationApi: Uri = Uri.fromString(baseUrl + "/registration").getOrElse(???)
+  val authorizationApi: Uri = Uri.fromString(baseUrl + "/authorization").getOrElse(???)
+  val itemApiAdd: Uri = Uri.fromString(baseUrl + "/item").getOrElse(???)
+  val itemApiShow: Uri = Uri.fromString(baseUrl + "/itemShow").getOrElse(???)
 
-  def itemApiLabel(label: String): Uri = Uri.fromString(baseUrl + s"/item/$label").getOrElse(throw exception)
+  def itemApiEdit(id: Int): Uri = Uri.fromString(baseUrl + "/item/edit/" + id).getOrElse(???)
 
-  def itemApiEdit(id: Int): Uri = Uri.fromString(baseUrl + "/item/edit/" + id).getOrElse(throw exception)
+  def itemApiSort(id: String): Uri = Uri.fromString(baseUrl + "/item/sort/" + id).getOrElse(???)
 
-  def itemApiSort(id: Int): Uri = Uri.fromString(baseUrl + "/item/sort/" + id).getOrElse(throw exception)
-
-  def itemApiFilter(id: Int): Uri = Uri.fromString(baseUrl + "/item/filter/" + id).getOrElse(throw exception)
+  def itemApiFilter(filter: String, value: String): Uri = Uri.fromString(baseUrl + s"/item/filter/$filter/$value").getOrElse(???)
 }

@@ -57,7 +57,7 @@ object Storage:
     item
   }
 
-  //todo: sort by id, status, countFile
+
   def sortItems[F[_]: Concurrent](f: TodoItem => String, session: String): F[List[TodoItem]] = Concurrent[F].pure{
     users.find(_.getSession == session).getOrElse(throw new Exception("Not found user"))
 
