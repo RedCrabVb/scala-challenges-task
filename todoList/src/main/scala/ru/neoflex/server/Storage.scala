@@ -1,9 +1,9 @@
 package ru.neoflex.server
 
 import cats.Defer
-import cats.effect.{Concurrent, Sync}
-import io.circe.generic.auto._
-import io.circe.syntax._
+import cats.effect.{Concurrent, ExitCode, Sync}
+import io.circe.generic.auto.*
+import io.circe.syntax.*
 import cats.syntax.all.catsSyntaxApplicativeId
 
 final case class TodoItem(id: Int,
@@ -51,7 +51,9 @@ object Storage:
   def deleteNote[F[_]: Concurrent](user: User, id: Int): F[Unit] = Concurrent[F].pure{
     checkSession(user.getSession)
 
-    items.filter(_.id != id)
+    items.find(_.id == id).getOrElse(throw new Exception("Not found"))
+
+    items = items.filter(_.id != id)
   }
 
   def editItems[F[_]: Concurrent](itemTmp: TodoItemTmp, id: Int): F[TodoItem] = Concurrent[F].pure{

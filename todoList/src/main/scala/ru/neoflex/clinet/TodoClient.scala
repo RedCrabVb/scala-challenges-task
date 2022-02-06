@@ -17,7 +17,7 @@ import ru.neoflex.server.{TodoItem, TodoItemTmp, User}
 import io.circe.generic.auto.*
 import io.circe.syntax.*
 import cats.effect.unsafe.implicits.global
-import ru.neoflex.clinet.TodoClient.{baseUrl}
+import ru.neoflex.clinet.TodoClient.baseUrl
 
 import scala.util.control.Breaks.*
 import scala.io.StdIn.readLine
@@ -86,7 +86,9 @@ object TodoClient extends IOApp with Config :
               )
               for {
                 list <- client.expect[List[TodoItem]](postTodoItems)
-                _ <- IO.delay( { Cache.notes = list })
+                _ <- IO.delay({
+                  Cache.notes = list
+                })
                 _ <- IO.println(UI.printTodoItem(list))
               } yield ExitCode.Success
             case EditNote(id, name, text, label, status) =>
@@ -101,19 +103,34 @@ object TodoClient extends IOApp with Config :
                 _ <- IO.println(s"Status: $status")
               yield
                 ExitCode.Success
-            case Exit() => break()
-            case ShowNoteFilter(api) => {
+            case ShowNoteFilter(api) =>
               val postTodoItems = GET(
                 user,
                 api
               )
               for {
                 list <- client.expect[List[TodoItem]](postTodoItems)
-                _ <- IO.delay( { Cache.notes = list })
+                _ <- IO.delay({
+                  Cache.notes = list
+                })
                 _ <- IO.println(UI.printTodoItem(list))
               } yield ExitCode.Success
-            }
-            case _ => ???
+            case Delete(id) =>
+              val postTodoItems = POST(
+                user,
+                Api.itemApiDelete(id)
+              )
+              for {
+                status <- client.status(postTodoItems)
+                _ <- IO.println(s"Status: $status")
+              } yield ExitCode.Success
+            case Exit() => break()
+            case _ =>
+              for
+                _ <- IO.println("Not found command")
+              yield {
+                ExitCode.Success
+              }
           }
 
           request.unsafeRunSync()

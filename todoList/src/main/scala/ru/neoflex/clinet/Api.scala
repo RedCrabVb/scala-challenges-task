@@ -8,6 +8,7 @@ object Api {
   val authorizationApi: Uri = Uri.fromString(baseUrl + "/authorization").getOrElse(???)
   val itemApiAdd: Uri = Uri.fromString(baseUrl + "/item").getOrElse(???)
   val itemApiShow: Uri = Uri.fromString(baseUrl + "/itemShow").getOrElse(???)
+  def itemApiDelete(id: Int): Uri = Uri.fromString(baseUrl + "/item/delete/" + id).getOrElse(???)
 
   def itemApiEdit(id: Int): Uri = Uri.fromString(baseUrl + "/item/edit/" + id).getOrElse(???)
 

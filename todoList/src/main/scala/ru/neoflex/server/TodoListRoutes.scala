@@ -16,6 +16,7 @@ import ru.neoflex.server.User
 
 import java.util.Date
 
+//fixme: I would like to receive errors from api
 trait TodoListRoutes[F[_]]:
   val dsl: Http4sDsl[F] = Http4sDsl[F]
   import dsl.*
@@ -33,7 +34,7 @@ trait TodoListRoutes[F[_]]:
         for
           item <- req.as[TodoItemTmp]
           newItem <- Storage.prependItems(item)
-          _ <- println(s"Item: $newItem").pure
+          _ <- println(s"Item add: $newItem").pure
           resp <- Ok(newItem)
         yield
           resp
@@ -65,6 +66,14 @@ trait TodoListRoutes[F[_]]:
           item <- req.as[TodoItemTmp]
           newItem <- Storage.editItems(item, id.toString.toInt)
           _ <- println(s"Edit item: $newItem").pure
+          resp <- Ok(newItem)
+        yield
+          resp
+      case req @ POST -> Root / "item" / "delete" / id =>
+        for
+          user <- req.as[User]
+          newItem <- Storage.deleteNote(user, id.toInt)
+          _ <- println(s"Delete item: $id").pure
           resp <- Ok(newItem)
         yield
           resp

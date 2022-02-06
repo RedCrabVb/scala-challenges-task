@@ -6,6 +6,7 @@ import scala.io.StdIn.readLine
 import scala.util.Try
 import scala.util.hashing.Hashing.Default
 
+//fixme: print to IO.print
 object UI {
   private[this] def sendNote(): Command = {
     println("Enter name note")
@@ -77,7 +78,7 @@ object UI {
 
     println("Enter id note")
     val id: Int = readLine().toInt
-    val note = Cache.notes.find(_.id == id).head
+    val note = Cache.notes.find(_.id == id).head //fixme: id may not be
 
     val name = getValue("name", note.name)
     val text = getValue("text", note.text)
@@ -129,9 +130,10 @@ object UI {
         |2. Show notes
         |3. Show notes with for filter
         |4. Edit note
-        |-5. Remove file
-        |-6. Upload file
-        |7. Exit
+        |5. Delete note
+        |-6. Remove file
+        |-7. Upload file
+        |8. Exit
         |""".stripMargin)
     val commandStr = readLine()
 
@@ -143,9 +145,13 @@ object UI {
         filterAndSort()
       case "4" =>
         editNote()
-      case "5" => RemoveFile()
-      case "6" => UploadFile()
-      case "7" => Exit()
+      case "5" =>
+        println("Enter id")
+        val id = readLine().toInt
+        Delete(id)
+      case "6" => RemoveFile()
+      case "7" => UploadFile()
+      case "8" => Exit()
       case _ => ???
     }
   }
