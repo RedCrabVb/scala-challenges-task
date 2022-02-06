@@ -20,7 +20,6 @@ object TodoServer extends IOApp with TodoListRoutes[IO] with Config:
 
   val serverResource = server.resource
 
-
   def run(args: List[String]): IO[ExitCode] =
     server
       .serve

@@ -16,6 +16,10 @@ import ru.neoflex.server.User
 
 import java.util.Date
 
+// todo:
+// set status note
+// set label
+// edit note
 trait TodoListRoutes[F[_]]:
   val dsl: Http4sDsl[F] = Http4sDsl[F]
   import dsl.*
@@ -37,6 +41,14 @@ trait TodoListRoutes[F[_]]:
           resp <- Ok(newItem)
         yield
           resp
+      case req @ POST -> Root / "item" / "edit" / id =>
+        for
+          item <- req.as[TodoItemTmp]
+          newItem <- Storage.editItems(item, id.toString.toInt)
+          _ <- println(s"Edit item: $newItem").pure
+          resp <- Ok(newItem)
+        yield
+          resp
     }
 
   def authorizationRoutes(using Concurrent[F]): HttpRoutes[F] =
@@ -54,7 +66,7 @@ trait TodoListRoutes[F[_]]:
         for
           user <- req.as[User]
           result <- Storage.registration(user)
-          _ <- println(s"registration for $user").pure
+          _ <- println(s"registration for $user, session: ${user.getSession}").pure
           resp <- Ok(user)
         yield
           resp

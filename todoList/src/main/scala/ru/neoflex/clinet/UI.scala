@@ -1,5 +1,7 @@
 package ru.neoflex.clinet
 
+import ru.neoflex.server.TodoItem
+
 import scala.io.StdIn.readLine
 
 object UI {
@@ -43,9 +45,9 @@ object UI {
       """
         |1. Send note
         |2. Show notes
-        |---3. Registration---
-        |4. Remove file
-        |5. Upload file
+        |3. Edit note
+        |-4. Remove file
+        |-5. Upload file
         |6. Exit
         |""".stripMargin)
     val commandStr = readLine()
@@ -53,10 +55,25 @@ object UI {
       case "1" =>
         println("Enter name note")
         val name = readLine()
+        println("Enter text")
+        val text = readLine()
         println("Enter label note")
         val label = readLine()
-        SendNote(name, label)
+
+        SendNote(name, text, label)
       case "2" => ShowNote()
+      case "3" =>
+        println("Enter id note")
+        val id: Int = readLine().toInt
+        println("Enter name note")
+        val name = readLine()
+        println("Enter text")
+        val text = readLine()
+        println("Enter label note")
+        val label = readLine()
+        println("Task completed? true/false")
+        val status = readLine().toLowerCase().toBoolean
+        EditNote(id, name, text, label, status)
       case "4" => RemoveFile()
       case "5" => UploadFile()
       case "6" => Exit()

@@ -6,14 +6,25 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 import cats.syntax.all.catsSyntaxApplicativeId
 
+/**
+ * @param id
+ * @param name
+ * @param text
+ * @param label
+ * @param status
+ * @param files
+ * @param session
+ */
 final case class TodoItem(id: Int,
+                          name: String,
                           text: String,
                           label: String,
+                          status: Boolean,
                           files: List[FileItem],
                           session: String
                          )
 
-final case class TodoItemTmp(text: String, label: String, session: String)
+final case class TodoItemTmp(name: String, text: String, label: String, status: Boolean, session: String)
 
 final case class FileItem(path: String)
 
@@ -36,9 +47,19 @@ object Storage:
 
   def prependItems[F[_]: Concurrent](item: TodoItemTmp): F[TodoItem] = Concurrent[F].pure{
     users.find(_.getSession == item.session).getOrElse(throw new Exception("Not found user"))
-    val newItem = TodoItem(items.size + 1, item.text, item.label, List(), item.session)
+
+    val newItem = TodoItem(items.size + 1, item.name, item.text, item.label, false, List(), item.session)
     items = newItem :: items
     newItem
+  }
+
+  def editItems[F[_]: Concurrent](itemTmp: TodoItemTmp, id: Int): F[TodoItem] = Concurrent[F].pure{
+    users.find(_.getSession == itemTmp.session).getOrElse(throw new Exception("Not found user"))
+
+    val itemInDB = items.filter(_.id == id).head
+    val item = TodoItem(id, itemTmp.name, itemTmp.text, itemTmp.label, itemTmp.status, itemInDB.files, itemInDB.session)
+    items = item :: items.filter(_.id != id)
+    item
   }
 
   //todo: sort by id, status, countFile

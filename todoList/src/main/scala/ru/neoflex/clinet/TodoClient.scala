@@ -24,9 +24,11 @@ import scala.io.StdIn.readLine
 
 sealed class Command
 
-final case class SendNote(name: String, label: String) extends Command
+final case class SendNote(name: String, text: String, label: String) extends Command
 
 final case class ShowNote() extends Command
+
+final case class EditNote(id: Int, name: String, text: String, label: String, status: Boolean) extends Command
 
 final case class RemoveFile() extends Command
 
@@ -42,30 +44,32 @@ final case class Exit() extends Command
 //todo:
 // enter data for load on server,
 // UI for select file load/download,
+// set status note
 object TodoClient extends IOApp with Config :
   var user: User = null
+  var notes: List[TodoItem] = null
 
   def run(args: List[String]): IO[ExitCode] =
     BlazeClientBuilder[IO].resource.use { client =>
       UI.start()
-      while(user == null) {
-        val command =UI.authorization()
+      while (user == null) {
+        val command = UI.authorization()
         //fixme: code duplication
         val post = command match {
           case Registration(login, password) =>
             val user = User(login, password)
-            val itemApi = Uri.fromString(baseUrl + "/registration").getOrElse(???)
+            val registrationApi = Uri.fromString(baseUrl + "/registration").getOrElse(???)
             val postTodoItem = POST(
               user,
-              itemApi
+              registrationApi
             )
             (postTodoItem, user)
           case Authorization(login, password) =>
             val user = User(login, password)
-            val itemApi = Uri.fromString(baseUrl + "/authorization").getOrElse(???)
+            val authorizationApi = Uri.fromString(baseUrl + "/authorization").getOrElse(???)
             val postTodoItem = POST(
               user,
-              itemApi
+              authorizationApi
             )
             (postTodoItem, user)
         }
@@ -76,29 +80,22 @@ object TodoClient extends IOApp with Config :
       }
 
 
-      def sendRequest[F](post: Request[IO]): IO[ExitCode] = {
-        for
-          status <- client.status(post)
-          _ <- IO.println(s"Post status: $status")
-        yield
-          ExitCode.Success
-      }
-
       breakable {
         while (true) {
           val command = UI.selectOperation()
           val request: IO[ExitCode] = command match {
-            case SendNote(name, label) =>
+            case SendNote(name, text, label) =>
               val userSession = user.getSession
-              val item = TodoItemTmp(name, label, userSession)
+              val item = TodoItemTmp(name, text, label, false, userSession)
               val itemApiAdd = Uri.fromString(baseUrl + "/item").getOrElse(???)
+              println(item.asJson)
               val postTodoItem = POST(
                 item,
                 itemApiAdd
               )
               for
                 status <- client.status(postTodoItem)
-                _ <- IO.println(s"Post status: $status")
+                _ <- IO.println(s"Status: $status")
               yield
                 ExitCode.Success
             case ShowNote() => {
@@ -109,9 +106,23 @@ object TodoClient extends IOApp with Config :
               )
               for {
                 list <- client.expect[List[TodoItem]](postTodoItems)
+                _ <- IO {notes = list}
                 _ <- IO.println(list)
               } yield ExitCode.Success
             }
+            case EditNote(id, name, text, label, status) =>
+              val updateNote = TodoItemTmp(name, text, label, status, user.getSession)
+              val itemApiEdit = Uri.fromString(baseUrl + "/item/edit/" + id).getOrElse(???)
+
+              val editNote = POST(
+                updateNote,
+                itemApiEdit
+              )
+              for
+                status <- client.status(editNote)
+                _ <- IO.println(s"Status: $status")
+              yield
+                ExitCode.Success
             case Exit() => break()
             case _ => ???
           }
