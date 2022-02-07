@@ -158,7 +158,7 @@ object UI {
           |4. Edit note
           |5. Delete note
           |-6. Remove file
-          |-7. Upload file
+          |7. Upload file
           |8. Exit
           |""".stripMargin)
       command <- IO.readLine
@@ -179,7 +179,18 @@ object UI {
           yield
             Delete(id.toInt)
         case "6" => IO.delay(RemoveFile())
-        case "7" => IO.delay(UploadFile())
+        case "7" => { for {
+            _ <- IO.println("Enter name file")
+            nameFile <- IO.readLine
+            _ <- IO.println("Enter id note")
+            id <- IO.delay(readLine().toInt)
+          } yield {
+            UploadFile(
+              Api.ftpApi(id.toString, Cache.user.login + "__" + nameFile),
+              Cache.notes.find(_.id == id).getOrElse(???).toTodoItemTmp()
+            )
+          }
+        }
         case "8" => IO.delay(Exit())
         case _ => ???
       }

@@ -121,6 +121,18 @@ object TodoClient extends IOApp with Config :
                 status <- client.status(postTodoItems)
                 _ <- IO.println(s"Status: $status")
               } yield ExitCode.Success
+            case UploadFile(path, TodoItemTmp(name, text, label, status, session)) => {
+              val postTodoItems = POST(
+                TodoItemTmp(name, text, label, status, session),
+                path
+              )
+              for {
+                port <- client.expect[String](postTodoItems)
+                _ <- IO.println(port)
+              } yield ExitCode.Success
+            }
+
+
             case Exit() => break()
             case _ =>
               for

@@ -17,7 +17,11 @@ final case class TodoItem(id: Int,
                           status: Boolean,
                           files: List[FileItem],
                           session: String
-                         )
+                         ) {
+  def toTodoItemTmp(): TodoItemTmp = {
+    TodoItemTmp(name, text, label, status, session)
+  }
+}
 
 final case class TodoItemTmp(name: String, text: String, label: String, status: Boolean, session: String)
 

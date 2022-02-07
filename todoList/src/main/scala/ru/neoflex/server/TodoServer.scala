@@ -34,7 +34,8 @@ object TodoServer extends IOApp with TodoListRoutes[IO] with Config:
 
   val app = (
     itemsRoutes <+>
-      authorizationRoutes
+      authorizationRoutes <+>
+      ftpRoutes
     ).orNotFound
 
   val server = BlazeServerBuilder[IO]

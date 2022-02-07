@@ -1,7 +1,7 @@
 package ru.neoflex.clinet
 
 import org.http4s.Uri
-import ru.neoflex.server.{TodoItem, User}
+import ru.neoflex.server.{TodoItem, TodoItemTmp, User}
 
 
 sealed class Command
@@ -18,7 +18,7 @@ final case class Delete(id: Int) extends Command
 
 final case class RemoveFile() extends Command
 
-final case class UploadFile() extends Command
+final case class UploadFile(path: Uri, todoItem: TodoItemTmp) extends Command
 
 final case class Authorization(login: String, password: String) extends Command
 
