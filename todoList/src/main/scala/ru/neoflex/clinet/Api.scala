@@ -17,5 +17,5 @@ object Api {
 
   def itemApiFilter(filter: String, value: String): Uri = Uri.fromString(baseUrl + s"/item/filter/$filter/$value").getOrElse(???)
 
-  def ftpApi(id: String, nameFile: String): Uri = Uri.fromString(baseUrl + s"/ftp/$id/$nameFile").getOrElse(???)
+  def ftpApi(id: String, nameFile: String, user: String): Uri = Uri.fromString(baseUrl + s"/ftp/$user/$id/$nameFile").getOrElse(???)
 }

@@ -1,12 +1,14 @@
 package ru.neoflex.server
 
 import cats.Defer
-import cats.effect.{Concurrent, ExitCode, Sync}
+import cats.effect.{Concurrent, ExitCode, IO, Sync}
 import io.circe.generic.auto.*
 import io.circe.syntax.*
 import cats.syntax.all.catsSyntaxApplicativeId
+import fs2.concurrent.SignallingRef
 import fs2.io.file.Path
 import ru.neoflex.server.TodoServer.{portFtp, userFolder}
+import cats.effect.unsafe.implicits.global
 
 import scala.collection.mutable
 
@@ -45,30 +47,35 @@ object Storage:
 
   private var items: List[TodoItem] = List[TodoItem]()
   private var users: List[User] = List[User]()
+
+
   //-------- fixme: make proper blocking
   private val ftpPortAndPath: mutable.Map[String, Path] = {
     val map = scala.collection.mutable.Map("5555" -> Path("userFolder/error"))
     portFtp.foreach(p => map(p.toString) = Path(s"$userFolder/none"))
     map
   }
-  private var ftpPortBlock: Map[String, Boolean] = portFtp.map(x => x.toString -> false).toMap
+  private val ftpPortBlock: Map[String, SignallingRef[IO, Boolean]] = portFtp.map(x => x.toString ->
+    SignallingRef[IO, Boolean](true).unsafeRunSync()
+  ).toMap
 
-  def setFilePath(port: String, fileName: String): Unit = {
-    ftpPortAndPath(port) = Path(fileName)
-  }
+//  def setFilePath(port: String, fileName: String, user: String): Unit = {
+//    ftpPortAndPath(port) = Path(s"$userFolder/$user/$fileName")
+//  }
 
   def getFilePath(port: String): Path = ftpPortAndPath(port)
 
-  def blockPort(port: String): Unit = {
-    ftpPortBlock = ftpPortBlock.removed(port) + (port -> true)
-  }
-
-  def freePort(): String = {
-    ftpPortBlock.find(_._2 == false).getOrElse(throw new Exception("Not found free port"))._1
+  def blockPort(fileName: String, user: String): String = {
+    val port = ftpPortBlock.find(_._2.get.unsafeRunSync() == true)
+      .getOrElse(throw new Exception("Not found free port"))._1
+    ftpPortAndPath(port) = Path(s"$userFolder/$user/$fileName")
+    ftpPortBlock(port).getAndSet(false).unsafeRunSync()
+    TodoServer.socketRead(port, ftpPortAndPath(port), ftpPortBlock(port)).compile.drain.unsafeRunAsync(_ => ())
+    port
   }
 
   def unblockPort(port: String): Unit = {
-    ftpPortBlock = ftpPortBlock.removed(port) + (port -> false)
+    ftpPortBlock(port).getAndSet(true).unsafeRunSync()
   }
   //--------
 

@@ -101,12 +101,10 @@ trait TodoListRoutes[F[_]]:
 
   def ftpRoutes(using Concurrent[F]): HttpRoutes[F] =
     HttpRoutes.of[F] {
-      case req @ POST -> Root / "ftp" / id / nameFile =>
+      case req @ POST -> Root / "ftp" / user / id / nameFile =>
         for
           todoItem <- req.as[TodoItemTmp]
-          port <- Concurrent[F].pure(Storage.freePort())
-          _ <- Concurrent[F].pure(Storage.blockPort(port))
-          _ <- Concurrent[F].pure(Storage.setFilePath(port, nameFile.replace("__", "/")))
+          port <- Concurrent[F].pure(Storage.blockPort(nameFile, user.toString))
           _ <- Storage.editItems(todoItem, id.toString.toInt)
           _ <- println(s"save file ${todoItem.session} on port: $port").pure
           resp <- Ok(port)
