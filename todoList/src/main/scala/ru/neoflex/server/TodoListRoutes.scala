@@ -49,7 +49,7 @@ trait TodoListRoutes[F[_]]:
         yield
           resp
       }
-      case req @ GET -> Root / "item" / "sort" / sort => {
+      case req @ GET -> Root / "item" / "sort" / sort =>
         for
           user <- req.as[User]
           items <- Storage.sortItems[F](sort match {
@@ -60,7 +60,6 @@ trait TodoListRoutes[F[_]]:
           resp <- Ok(items)
         yield
           resp
-      }
       case req @ POST -> Root / "item" / "edit" / id =>
         for
           item <- req.as[TodoItemTmp]
@@ -72,7 +71,7 @@ trait TodoListRoutes[F[_]]:
       case req @ POST -> Root / "item" / "delete" / id =>
         for
           user <- req.as[User]
-          newItem <- Storage.deleteNote(user, id.toInt)
+          newItem <- Storage.deleteTodoItem(user, id.toInt)
           _ <- println(s"Delete item: $id").pure
           resp <- Ok(newItem)
         yield

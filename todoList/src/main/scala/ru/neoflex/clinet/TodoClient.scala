@@ -110,9 +110,6 @@ object TodoClient extends IOApp with Config :
               )
               for {
                 list <- client.expect[List[TodoItem]](postTodoItems)
-                _ <- IO.delay({
-                  Cache.notes = list
-                })
                 _ <- IO.println(UI.printTodoItem(list))
               } yield ExitCode.Success
             case Delete(id) =>

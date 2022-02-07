@@ -29,8 +29,20 @@ final case class User(login: String, password: String) {
 
 
 object Storage:
+  private var id = 0
+  private def getId(): Int = {id += 1; id}
   private var items: List[TodoItem] = List[TodoItem]()
   private var users: List[User] = List[User]()
+
+  def checkSession(session: String): Unit = {
+    users.find(_.getSession == session).getOrElse(throw new Exception("Not found user"))
+  }
+
+  def getItemByIdAndSession(id: Int, session: String): TodoItem = {
+    items.find(item => item.id == id && item.session == session).getOrElse(throw new Exception("Not found"))
+  }
+  
+  
 
   def getAllItems[F[_]](user: User)(using Concurrent[F]): F[List[TodoItem]] = {
     items.filter(_.session == user.getSession).pure
@@ -43,15 +55,15 @@ object Storage:
   def prependItems[F[_]: Concurrent](item: TodoItemTmp): F[TodoItem] = Concurrent[F].pure{
     checkSession(item.session)
 
-    val newItem = TodoItem(items.size + 1, item.name, item.text, item.label, false, List(), item.session)
+    val newItem = TodoItem(getId(), item.name, item.text, item.label, false, List(), item.session)
     items = newItem :: items
     newItem
   }
 
-  def deleteNote[F[_]: Concurrent](user: User, id: Int): F[Unit] = Concurrent[F].pure{
+  def deleteTodoItem[F[_]: Concurrent](user: User, id: Int): F[Unit] = Concurrent[F].pure{
     checkSession(user.getSession)
 
-    items.find(_.id == id).getOrElse(throw new Exception("Not found"))
+    getItemByIdAndSession(id, user.getSession)
 
     items = items.filter(_.id != id)
   }
@@ -59,7 +71,7 @@ object Storage:
   def editItems[F[_]: Concurrent](itemTmp: TodoItemTmp, id: Int): F[TodoItem] = Concurrent[F].pure{
     checkSession(itemTmp.session)
 
-    val itemInDB = items.filter(_.id == id).head
+    val itemInDB = getItemByIdAndSession(id, itemTmp.session)
     val item = TodoItem(id, itemTmp.name, itemTmp.text, itemTmp.label, itemTmp.status, itemInDB.files, itemInDB.session)
     items = item :: items.filter(_.id != id)
     item
@@ -84,8 +96,4 @@ object Storage:
     if (!realAccount) {
       throw new NoSuchElementException()
     }
-  }
-
-  def checkSession(session: String): Unit = {
-    users.find(_.getSession == session).getOrElse(throw new Exception("Not found user"))
   }

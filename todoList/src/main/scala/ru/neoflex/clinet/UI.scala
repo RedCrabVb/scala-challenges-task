@@ -7,7 +7,6 @@ import scala.io.StdIn.readLine
 import scala.util.Try
 import scala.util.hashing.Hashing.Default
 
-//fixme: print to IO.print
 object UI {
   private[this] def sendNote(): IO[Command] = {
     for
@@ -38,7 +37,6 @@ object UI {
             value <- IO.readLine
           yield
             Api.itemApiFilter("label", value)
-
         case "2" =>
           IO(Api.itemApiSort("text"))
         case "3" =>
@@ -80,7 +78,7 @@ object UI {
               _ <- IO.println(s"Enter $field " + infoForUser)
               result <- IO.delay(readInput)
             yield
-                result
+              result
           } else {
             IO.pure(value)
           }
@@ -94,8 +92,9 @@ object UI {
         readLine().toInt
       }
       note <- IO {
-        Cache.notes.find(_.id == id).head
-      } //fixme: id may not be
+        Try(Cache.notes.find(_.id == id).head).
+          getOrElse(TodoItem(id, "not found", "not found", "not found", false, List(), "not found"))
+      }
       name <- getValue("name", note.name, readLine())
       text <- getValue("text", note.text, readLine())
       label <- getValue("label", note.label, readLine())
@@ -179,15 +178,9 @@ object UI {
             id <- IO.readLine
           yield
             Delete(id.toInt)
-        case "6" => IO {
-          RemoveFile()
-        }
-        case "7" => IO {
-          UploadFile()
-        }
-        case "8" => IO {
-          Exit()
-        }
+        case "6" => IO.delay(RemoveFile())
+        case "7" => IO.delay(UploadFile())
+        case "8" => IO.delay(Exit())
         case _ => ???
       }
     } yield {
