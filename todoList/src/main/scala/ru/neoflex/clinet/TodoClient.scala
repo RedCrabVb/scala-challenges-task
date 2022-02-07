@@ -33,9 +33,9 @@ object TodoClient extends IOApp with Config :
 
   def run(args: List[String]): IO[ExitCode] =
     BlazeClientBuilder[IO].resource.use { client =>
-      UI.start()
+      UI.start().unsafeRunSync()
       while (user == null) {
-        val command = UI.authorization()
+        val command = UI.authorization().unsafeRunSync()
         //fixme: code duplication
         val post = command match {
           case Registration(login, password) =>
@@ -64,7 +64,7 @@ object TodoClient extends IOApp with Config :
 
       breakable {
         while (true) {
-          val command = UI.selectOperation()
+          val command = UI.selectOperation().unsafeRunSync()
           val request: IO[ExitCode] = command match {
             case SendNote(name, text, label) =>
               val userSession = user.getSession
