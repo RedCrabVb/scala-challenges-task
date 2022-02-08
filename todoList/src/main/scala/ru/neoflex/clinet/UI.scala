@@ -3,6 +3,7 @@ package ru.neoflex.clinet
 import cats.effect.IO
 import ru.neoflex.server.TodoItem
 
+import scala.collection.mutable.ListBuffer
 import scala.io.StdIn.readLine
 import scala.util.Try
 import scala.util.hashing.Hashing.Default
@@ -93,7 +94,7 @@ object UI {
       }
       note <- IO {
         Try(Cache.notes.find(_.id == id).head).
-          getOrElse(TodoItem(id, "not found", "not found", "not found", false, List(), "not found"))
+          getOrElse(TodoItem(id, Cache.user.getSession))
       }
       name <- getValue("name", note.name, readLine())
       text <- getValue("text", note.text, readLine())

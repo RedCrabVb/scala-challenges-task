@@ -123,7 +123,7 @@ object TodoClient extends IOApp with Config :
               } yield ExitCode.Success
             case UploadFile(path, TodoItemTmp(name, text, label, status, session)) => {
               val postTodoItems = POST(
-                TodoItemTmp(name, text, label, status, session),
+                Cache.user,
                 path
               )
               for {

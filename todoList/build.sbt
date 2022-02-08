@@ -5,7 +5,7 @@ ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / scalaVersion := scala3Version
 
 val Http4sVersion = "1.0.0-M30" //"0.21.19"
-val fs2CoreVersion = "3.2.0"
+val fs2CoreVersion = "3.2.4"
 
 val CirceVersion = "0.14.1" //"0.13.0"
 val circe = Seq(

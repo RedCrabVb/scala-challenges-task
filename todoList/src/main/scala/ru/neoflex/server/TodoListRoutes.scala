@@ -34,7 +34,7 @@ trait TodoListRoutes[F[_]]:
         for
           item <- req.as[TodoItemTmp]
           newItem <- Storage.prependItems(item)
-          _ <- println(s"Item add: $newItem").pure
+          _ <- println(s"Item add: $newItem, ${newItem.asJson}").pure
           resp <- Ok(newItem)
         yield
           resp
@@ -101,19 +101,19 @@ trait TodoListRoutes[F[_]]:
 
   def ftpRoutes(using Concurrent[F]): HttpRoutes[F] =
     HttpRoutes.of[F] {
-      case req @ POST -> Root / "ftp" / user / id / nameFile =>
+      case req @ POST -> Root / "ftp" / userName / id / nameFile =>
         for
-          todoItem <- req.as[TodoItemTmp]
-          port <- Concurrent[F].pure(Storage.blockPort(nameFile, user.toString))
-          _ <- Storage.editItems(todoItem, id.toString.toInt)
-          _ <- println(s"save file ${todoItem.session} on port: $port").pure
+          user <- req.as[User]
+          port <- Concurrent[F].pure(Storage.blockPort(nameFile, user))
+          _ <- Concurrent[F].pure(Storage.addFile(id.toInt, nameFile, user))
+          _ <- println(s"save file ${user.getSession} on port: $port").pure
           resp <- Ok(port)
         yield
           resp
       case req @ POST -> Root / "ftp" / port =>
         for
           user <- req.as[User]
-          _ <- Concurrent[F].pure(Storage.unblockPort(port))
+          _ <- Concurrent[F].pure(Storage.unblockPort(port, user))
           resp <- Ok(port)
         yield
           resp

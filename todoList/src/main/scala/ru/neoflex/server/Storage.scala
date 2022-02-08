@@ -11,21 +11,34 @@ import ru.neoflex.server.TodoServer.{portFtp, userFolder}
 import cats.effect.unsafe.implicits.global
 
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 final case class TodoItem(id: Int,
-                          name: String,
-                          text: String,
-                          label: String,
-                          status: Boolean,
-                          files: List[FileItem],
-                          session: String
+                          session: String,
+                          name: String = "Not found",
+                          text: String = "Not found",
+                          label: String = "Not found",
+                          status: Boolean = false,
+                          files: List[String] = List()
                          ) {
   def toTodoItemTmp(): TodoItemTmp = {
     TodoItemTmp(name, text, label, status, session)
   }
+
+  def update(name: String = "Not found",
+             text: String = "Not found",
+             label: String = "Not found",
+             status: Boolean = false,
+             files: List[String] = List()): TodoItem = {
+    TodoItem(id, session, name, text, label, status, files)
+  }
 }
 
-final case class TodoItemTmp(name: String, text: String, label: String, status: Boolean, session: String)
+final case class TodoItemTmp(name: String, text: String, label: String, status: Boolean, session: String) {
+  def toTodoItem(id: Int): TodoItem = {
+    TodoItem(id, session, name, text, label, status)
+  }
+}
 
 final case class FileItem(path: String)
 
@@ -41,15 +54,16 @@ final case class User(login: String, password: String) {
 object Storage:
   private var id = 0
 
-  private def getId(): Int = {
-    id += 1; id
+  private def getId: Int = {
+    id += 1
+    id
   }
 
   private var items: List[TodoItem] = List[TodoItem]()
   private var users: List[User] = List[User]()
 
 
-  //-------- fixme: make proper blocking
+  //-------- fixme: to IO
   private val ftpPortAndPath: mutable.Map[String, Path] = {
     val map = scala.collection.mutable.Map("5555" -> Path("userFolder/error"))
     portFtp.foreach(p => map(p.toString) = Path(s"$userFolder/none"))
@@ -59,24 +73,28 @@ object Storage:
     SignallingRef[IO, Boolean](true).unsafeRunSync()
   ).toMap
 
-//  def setFilePath(port: String, fileName: String, user: String): Unit = {
-//    ftpPortAndPath(port) = Path(s"$userFolder/$user/$fileName")
-//  }
+  def addFile(id: Int, nameFile: String, user: User): Unit = {
+    val item = getItemByIdAndSession(id, user.getSession)
+    val newItem = item.update(files = List(nameFile) ++ item.files)
+    items = newItem :: items.filter(_.id != id)
+  }
 
-  def getFilePath(port: String): Path = ftpPortAndPath(port)
+  def blockPort(fileName: String, user: User): String = {
+    checkSession(user.getSession)
 
-  def blockPort(fileName: String, user: String): String = {
     val port = ftpPortBlock.find(_._2.get.unsafeRunSync() == true)
       .getOrElse(throw new Exception("Not found free port"))._1
-    ftpPortAndPath(port) = Path(s"$userFolder/$user/$fileName")
+    ftpPortAndPath(port) = Path(s"$userFolder/${user.login}/$fileName")
     ftpPortBlock(port).getAndSet(false).unsafeRunSync()
     TodoServer.socketRead(port, ftpPortAndPath(port), ftpPortBlock(port)).compile.drain.unsafeRunAsync(_ => ())
     port
   }
 
-  def unblockPort(port: String): Unit = {
+  def unblockPort(port: String, user: User): Unit = {
+    checkSession(user.getSession)
     ftpPortBlock(port).getAndSet(true).unsafeRunSync()
   }
+
   //--------
 
 
@@ -100,7 +118,7 @@ object Storage:
   def prependItems[F[_] : Concurrent](item: TodoItemTmp): F[TodoItem] = Concurrent[F].pure {
     checkSession(item.session)
 
-    val newItem = TodoItem(getId(), item.name, item.text, item.label, false, List(), item.session)
+    val newItem = TodoItem(getId, item.session, item.name, item.text, item.label)
     items = newItem :: items
     newItem
   }
@@ -117,7 +135,7 @@ object Storage:
     checkSession(itemTmp.session)
 
     val itemInDB = getItemByIdAndSession(id, itemTmp.session)
-    val item = TodoItem(id, itemTmp.name, itemTmp.text, itemTmp.label, itemTmp.status, itemInDB.files, itemInDB.session)
+    val item = itemTmp.toTodoItem(id)
     items = item :: items.filter(_.id != id)
     item
   }
@@ -134,6 +152,9 @@ object Storage:
       throw new Exception("Use with this login already exist")
     }
     users = user :: users
+    import java.nio.file.Files
+    import java.nio.file.Paths
+    Files.createDirectories(Paths.get(s"$userFolder/${user.login}"))
   }
 
   def authorization[F[_] : Concurrent](userForCheck: User): F[Unit] = Concurrent[F].pure {
