@@ -39,7 +39,7 @@ trait TodoListRoutes[F[_]]:
           resp <- Ok(newItem)
         yield
           resp
-      case req @ GET -> Root / "item" / "filter" / filter / value => {
+      case req @ GET -> Root / "item" / "filter" / filter / value =>
         for
           user <- req.as[User]
           items <- Storage.getItemsWithLabel[F](user, filter match {
@@ -49,7 +49,6 @@ trait TodoListRoutes[F[_]]:
           resp <- Ok(items)
         yield
           resp
-      }
       case req @ GET -> Root / "item" / "sort" / sort =>
         for
           user <- req.as[User]

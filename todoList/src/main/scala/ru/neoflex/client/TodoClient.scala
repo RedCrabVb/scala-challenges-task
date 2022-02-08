@@ -1,5 +1,4 @@
 package ru.neoflex.client
-
 import cats.effect.{ExitCode, IO, IOApp, Sync, Temporal}
 import org.http4s.{MediaType, Request, client, *}
 import org.http4s.client.{Client, *}
@@ -34,6 +33,7 @@ import com.comcast.ip4s.Literals.host
 import fs2.io.file.{Files, Path}
 import cats.effect.Concurrent
 import ru.neoflex.fs2.Fs2TransportFile
+
 
 
 object TodoClient extends IOApp with Config :

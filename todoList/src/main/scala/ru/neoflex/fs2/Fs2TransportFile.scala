@@ -34,7 +34,7 @@ object Fs2TransportFile {
       .getOrElse(throw new Exception("Not found free port"))._1
     ftpPortAndPath(port) = Path(s"$userFolder/${user.login}/$fileName")
     ftpPortBlock(port).getAndSet(false).unsafeRunSync()
-    Fs2TransportFile.socketRead(port, ftpPortAndPath(port), ftpPortBlock(port)).compile.drain.unsafeRunAsync(_ => ())
+    Fs2TransportFile.socketRead[IO](port, ftpPortAndPath(port), ftpPortBlock(port)).compile.drain.unsafeRunAsync(_ => ())
     port
   }
 
@@ -51,13 +51,12 @@ object Fs2TransportFile {
         .handleErrorWith(_ => Stream.empty)
     }.parJoin(10).interruptWhen(interrupter)
 
-
   def connect[F[_]: Temporal: Network](address: com.comcast.ip4s.SocketAddress[com.comcast.ip4s.Host]): Stream[F, Socket[F]] =
-      Stream.resource(Network[F].client(address))
-        .handleErrorWith {
-          case _: ConnectException =>
-            connect(address).delayBy(5.seconds)
-        }
+    Stream.resource(Network[F].client(address))
+      .handleErrorWith {
+        case _: ConnectException =>
+          connect(address).delayBy(5.seconds)
+      }
 
   def sendFile[F[_]: Temporal: Network: Concurrent: Files](port: String, pathFile: String): Stream[F, Unit] =
     connect(SocketAddress(com.comcast.ip4s.Host.fromString(s"$host").get,
@@ -65,5 +64,4 @@ object Fs2TransportFile {
       Files[F].readAll(Path(pathFile))
         .through(socket.writes)
     }
-
 }

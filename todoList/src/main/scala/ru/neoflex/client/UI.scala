@@ -158,9 +158,10 @@ object UI {
           |3. Show notes with for filter
           |4. Edit note
           |5. Delete note
-          |-6. Remove file
-          |7. Upload file
-          |8. Exit
+          |-6. Loading file-
+          |-7. Delete file-
+          |8. Upload file
+          |9. Exit
           |""".stripMargin)
       command <- IO.readLine
       result <- command match {
@@ -180,7 +181,7 @@ object UI {
           yield
             Delete(id.toInt)
         case "6" => IO.delay(RemoveFile())
-        case "7" => { for {
+        case "8" => { for {
             _ <- IO.println("Enter id note")
             id <- IO.delay(readLine().toInt)
             _ <- IO.println("Enter name file")
@@ -195,7 +196,7 @@ object UI {
             )
           }
         }
-        case "8" => IO.delay(Exit())
+        case "9" => IO.delay(Exit())
         case _ => IO.delay(NotFoundCommand())
       }
     } yield {

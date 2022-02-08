@@ -23,7 +23,9 @@ import java.time.format.DateTimeFormatter
 import scala.collection.mutable
 
 object TodoServer extends IOApp with TodoListRoutes[IO] with Config:
-
+  import java.nio.file.Files
+  import java.nio.file.Paths
+  Files.createDirectories(Paths.get(userFolder))
 
   val app = (
     itemsRoutes <+>
