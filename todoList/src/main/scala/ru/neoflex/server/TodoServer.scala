@@ -31,15 +31,6 @@ object TodoServer extends IOApp with TodoListRoutes[IO] with Config:
         .handleErrorWith(_ => Stream.empty) // handle errors of client sockets
       }.parJoin(10).interruptWhen(interrupter)
 
-  val varargs: SignallingRef[IO, Boolean] = SignallingRef[IO, Boolean](false).unsafeRunSync()
-
-  socketRead("5555", Path("error"), varargs)
-
-
-//  portFtp.map(port => socketRead(
-//    port.toString,
-//    varargs
-//  ).compile.drain.unsafeRunAsync(_ => ()))
 
   val app = (
     itemsRoutes <+>

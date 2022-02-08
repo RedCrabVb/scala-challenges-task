@@ -34,7 +34,7 @@ trait TodoListRoutes[F[_]]:
         for
           item <- req.as[TodoItemTmp]
           newItem <- Storage.prependItems(item)
-          _ <- println(s"Item add: $newItem, ${newItem.asJson}").pure
+          _ <- println(s"Item add: $newItem").pure
           resp <- Ok(newItem)
         yield
           resp

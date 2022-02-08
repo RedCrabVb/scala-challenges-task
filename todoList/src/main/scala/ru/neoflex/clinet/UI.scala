@@ -188,7 +188,7 @@ object UI {
           } yield {
             UploadFile(
               Api.ftpApi(id.toString, nameFile, Cache.user.login),
-              Cache.notes.find(_.id == id).getOrElse(???).toTodoItemTmp()
+              nameFile
             )
           }
         }
