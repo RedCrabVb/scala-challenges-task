@@ -63,7 +63,6 @@ object Storage:
   private var users: List[User] = List[User]()
 
 
-  //-------- fixme: to IO
   private val ftpPortAndPath: mutable.Map[String, Path] = {
     val map = scala.collection.mutable.Map("5555" -> Path("userFolder/error"))
     portFtp.foreach(p => map(p.toString) = Path(s"$userFolder/none"))
@@ -94,8 +93,6 @@ object Storage:
     checkSession(user.getSession)
     ftpPortBlock(port).getAndSet(true).unsafeRunSync()
   }
-
-  //--------
 
 
   def checkSession(session: String): Unit = {

@@ -34,9 +34,7 @@ import com.comcast.ip4s.Literals.host
 import fs2.io.file.{Files, Path}
 import cats.effect.Concurrent
 
-//todo:
-// enter data for load on server,
-// UI for select file load/download,
+
 object TodoClient extends IOApp with Config :
   def connect[F[_]: Temporal: Network](address: com.comcast.ip4s.SocketAddress[com.comcast.ip4s.Host]): Stream[F, Socket[F]] =
     Stream.resource(Network[F].client(address))
@@ -54,30 +52,18 @@ object TodoClient extends IOApp with Config :
 
 
   def run(args: List[String]): IO[ExitCode] =
-//    for {
-//      _ <- client[IO].compile.drain
-//    } yield (ExitCode.Success)
     BlazeClientBuilder[IO].resource.use { client =>
       UI.start().unsafeRunSync()
       while (user == null) {
         val command = UI.authorization().unsafeRunSync()
-        //fixme: code duplication
+        def sendUser(api: Uri, login: String, password: String) = {
+          (POST(user, registrationApi), User(login, password))
+        }
         val post = command match {
           case Registration(login, password) =>
-            val user = User(login, password)
-            val postTodoItem = POST(
-              user,
-              registrationApi
-            )
-            (postTodoItem, user)
+            sendUser(registrationApi, login, password)
           case Authorization(login, password) =>
-            val user = User(login, password)
-
-            val postTodoItem = POST(
-              user,
-              authorizationApi
-            )
-            (postTodoItem, user)
+            sendUser(authorizationApi, login, password)
           case _ => throw new Exception
         }
 
@@ -94,83 +80,66 @@ object TodoClient extends IOApp with Config :
             case SendNote(name, text, label) =>
               val userSession = user.getSession
               val item = TodoItemTmp(name, text, label, false, userSession)
-              println(item.asJson)
-              val postTodoItem = POST(
-                item,
-                itemApiAdd
-              )
+              val postTodoItemAdd = POST(item, itemApiAdd)
               for
-                status <- client.status(postTodoItem)
+                status <- client.status(postTodoItemAdd)
                 _ <- IO.println(s"Status: $status")
               yield
                 ExitCode.Success
+
             case ShowNote() =>
-              val postTodoItems = GET(
-                user,
-                itemApiShow
-              )
+              val postShowItem = GET(user, itemApiShow)
               for {
-                list <- client.expect[List[TodoItem]](postTodoItems)
+                list <- client.expect[List[TodoItem]](postShowItem)
                 _ <- IO.delay({
                   Cache.notes = list
                 })
                 _ <- IO.println(UI.printTodoItem(list))
               } yield ExitCode.Success
+
             case EditNote(id, name, text, label, status) =>
               val updateNote = TodoItemTmp(name, text, label, status, user.getSession)
 
-              val editNote = POST(
-                updateNote,
-                itemApiEdit(id)
-              )
+              val editNote = POST(updateNote, itemApiEdit(id))
+
               for
                 status <- client.status(editNote)
                 _ <- IO.println(s"Status: $status")
               yield
                 ExitCode.Success
+
             case ShowNoteFilter(api) =>
-              val postTodoItems = GET(
-                user,
-                api
-              )
+              val postShowItem = GET(user, api)
+
               for {
-                list <- client.expect[List[TodoItem]](postTodoItems)
+                list <- client.expect[List[TodoItem]](postShowItem)
                 _ <- IO.println(UI.printTodoItem(list))
               } yield ExitCode.Success
+
             case Delete(id) =>
-              val postTodoItems = POST(
-                user,
-                Api.itemApiDelete(id)
-              )
+              val postDeleteItem = POST(user, Api.itemApiDelete(id))
               for {
-                status <- client.status(postTodoItems)
+                status <- client.status(postDeleteItem)
                 _ <- IO.println(s"Status: $status")
               } yield ExitCode.Success
-            case UploadFile(openPort, nameFile) => {
-              val postOpenPort = POST(
-                Cache.user,
-                openPort
-              )
-              val postCloseConnect = (portClose: String) => POST(
-                Cache.user,
-                Api.ftpApiClose(portClose)
-              )
-              for {
+
+            case UploadFile(openPort, pathToFile, nameFile) =>
+              val postOpenPort = POST(Cache.user, openPort)
+              val postCloseConnect = (portClose: String) => POST(Cache.user, Api.ftpApiClose(portClose))
+              for
                 port <- client.expect[String](postOpenPort)
                 _ <- IO.println(port)
-                _ <- sendFile[IO](port, nameFile).compile.drain
+                _ <- sendFile[IO](port, pathToFile).compile.drain
                 _ <- client.expect[String](postCloseConnect(port))
-              } yield ExitCode.Success
-            }
-
+              yield ExitCode.Success
 
             case Exit() => break()
-            case _ =>
+
+            case NotFoundCommand() =>
               for
                 _ <- IO.println("Not found command")
-              yield {
+              yield
                 ExitCode.Success
-              }
           }
 
           request.unsafeRunSync()

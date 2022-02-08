@@ -181,19 +181,22 @@ object UI {
             Delete(id.toInt)
         case "6" => IO.delay(RemoveFile())
         case "7" => { for {
-            _ <- IO.println("Enter name file")
-            nameFile <- IO.readLine
             _ <- IO.println("Enter id note")
             id <- IO.delay(readLine().toInt)
+            _ <- IO.println("Enter name file")
+            nameFile <- IO.readLine
+            _ <- IO.println("Enter path to file")
+            pathToFile <- IO.readLine
           } yield {
             UploadFile(
               Api.ftpApi(id.toString, nameFile, Cache.user.login),
+              pathToFile,
               nameFile
             )
           }
         }
         case "8" => IO.delay(Exit())
-        case _ => ???
+        case _ => IO.delay(NotFoundCommand())
       }
     } yield {
       result

@@ -21,14 +21,14 @@ import ru.neoflex.server.Storage
 
 import java.time.format.DateTimeFormatter
 import scala.collection.mutable
-
+//todo: remove file, download file
 object TodoServer extends IOApp with TodoListRoutes[IO] with Config:
 
   def socketRead(port: String, out: Path, interrupter: fs2.concurrent.SignallingRef[IO, Boolean]) =
     Network[IO].server(port = Port.fromString(port)).map { client =>
       client.reads
         .through(Files[IO].writeAll(out))
-        .handleErrorWith(_ => Stream.empty) // handle errors of client sockets
+        .handleErrorWith(_ => Stream.empty)
       }.parJoin(10).interruptWhen(interrupter)
 
 
