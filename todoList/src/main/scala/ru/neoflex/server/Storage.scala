@@ -9,6 +9,7 @@ import fs2.concurrent.SignallingRef
 import fs2.io.file.Path
 import ru.neoflex.server.TodoServer.{portFtp, userFolder}
 import cats.effect.unsafe.implicits.global
+import ru.neoflex.fs2.Fs2TransportFile
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -62,38 +63,11 @@ object Storage:
   private var items: List[TodoItem] = List[TodoItem]()
   private var users: List[User] = List[User]()
 
-
-  private val ftpPortAndPath: mutable.Map[String, Path] = {
-    val map = scala.collection.mutable.Map("5555" -> Path("userFolder/error"))
-    portFtp.foreach(p => map(p.toString) = Path(s"$userFolder/none"))
-    map
-  }
-  private val ftpPortBlock: Map[String, SignallingRef[IO, Boolean]] = portFtp.map(x => x.toString ->
-    SignallingRef[IO, Boolean](true).unsafeRunSync()
-  ).toMap
-
   def addFile(id: Int, nameFile: String, user: User): Unit = {
     val item = getItemByIdAndSession(id, user.getSession)
     val newItem = item.update(files = List(nameFile) ++ item.files)
     items = newItem :: items.filter(_.id != id)
   }
-
-  def blockPort(fileName: String, user: User): String = {
-    checkSession(user.getSession)
-
-    val port = ftpPortBlock.find(_._2.get.unsafeRunSync() == true)
-      .getOrElse(throw new Exception("Not found free port"))._1
-    ftpPortAndPath(port) = Path(s"$userFolder/${user.login}/$fileName")
-    ftpPortBlock(port).getAndSet(false).unsafeRunSync()
-    TodoServer.socketRead(port, ftpPortAndPath(port), ftpPortBlock(port)).compile.drain.unsafeRunAsync(_ => ())
-    port
-  }
-
-  def unblockPort(port: String, user: User): Unit = {
-    checkSession(user.getSession)
-    ftpPortBlock(port).getAndSet(true).unsafeRunSync()
-  }
-
 
   def checkSession(session: String): Unit = {
     users.find(_.getSession == session).getOrElse(throw new Exception("Not found user"))

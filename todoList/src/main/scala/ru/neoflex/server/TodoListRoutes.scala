@@ -9,9 +9,10 @@ import org.http4s.circe.*
 import org.http4s.circe.CirceEntityCodec.{circeEntityDecoder, circeEntityEncoder}
 import org.http4s.dsl.Http4sDsl
 import org.http4s.{EntityEncoder, HttpRoutes}
-import io.circe.generic.auto._
-import io.circe.syntax._
-import io.circe.parser._
+import io.circe.generic.auto.*
+import io.circe.syntax.*
+import io.circe.parser.*
+import ru.neoflex.fs2.Fs2TransportFile
 import ru.neoflex.server.User
 
 import java.util.Date
@@ -104,7 +105,7 @@ trait TodoListRoutes[F[_]]:
       case req @ POST -> Root / "ftp" / userName / id / nameFile =>
         for
           user <- req.as[User]
-          port <- Concurrent[F].pure(Storage.blockPort(nameFile, user))
+          port <- Concurrent[F].pure(Fs2TransportFile.blockPort(nameFile, user))
           _ <- Concurrent[F].pure(Storage.addFile(id.toInt, nameFile, user))
           _ <- println(s"save file ${user.getSession} on port: $port").pure
           resp <- Ok(port)
@@ -113,7 +114,7 @@ trait TodoListRoutes[F[_]]:
       case req @ POST -> Root / "ftp" / port =>
         for
           user <- req.as[User]
-          _ <- Concurrent[F].pure(Storage.unblockPort(port, user))
+          _ <- Concurrent[F].pure(Fs2TransportFile.unblockPort(port, user))
           resp <- Ok(port)
         yield
           resp
