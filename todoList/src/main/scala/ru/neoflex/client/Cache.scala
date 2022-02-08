@@ -1,4 +1,4 @@
-package ru.neoflex.clinet
+package ru.neoflex.client
 
 import org.http4s.Uri
 import ru.neoflex.server.{TodoItem, TodoItemTmp, User}

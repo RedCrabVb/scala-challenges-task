@@ -11,7 +11,7 @@ import ru.neoflex.server.Storage.{checkSession, getItemByIdAndSession, items}
 import ru.neoflex.server.TodoServer.{portFtp, userFolder}
 import ru.neoflex.server.User
 import cats.effect.unsafe.implicits.global
-import ru.neoflex.clinet.TodoClient.host
+import ru.neoflex.client.TodoClient.host
 
 import scala.concurrent.duration.*
 import scala.collection.mutable

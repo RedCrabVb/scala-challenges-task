@@ -1,4 +1,4 @@
-package ru.neoflex.clinet
+package ru.neoflex.client
 
 import cats.effect.IO
 import ru.neoflex.server.TodoItem

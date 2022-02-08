@@ -1,7 +1,7 @@
-package ru.neoflex.clinet
+package ru.neoflex.client
 
 import org.http4s.Uri
-import ru.neoflex.clinet.TodoClient.baseUrl
+import ru.neoflex.client.TodoClient.baseUrl
 
 object Api {
   val registrationApi: Uri = Uri.fromString(baseUrl + "/registration").getOrElse(???)

@@ -1,4 +1,4 @@
-package ru.neoflex.clinet
+package ru.neoflex.client
 
 import cats.effect.{ExitCode, IO, IOApp, Sync, Temporal}
 import org.http4s.{MediaType, Request, client, *}
@@ -17,7 +17,7 @@ import ru.neoflex.server.{TodoItem, TodoItemTmp, User}
 import io.circe.generic.auto.*
 import io.circe.syntax.*
 import cats.effect.unsafe.implicits.global
-import ru.neoflex.clinet.TodoClient.baseUrl
+import ru.neoflex.client.TodoClient.baseUrl
 
 import scala.concurrent.duration.*
 import scala.util.control.Breaks.*
@@ -25,8 +25,8 @@ import scala.io.StdIn.readLine
 import Api.*
 import com.comcast.ip4s.{Literals, SocketAddress}
 import fs2.io.net.{ConnectException, Network, Socket}
-import ru.neoflex.clinet.Cache.*
-import ru.neoflex.clinet.Authorization
+import ru.neoflex.client.Cache.*
+import ru.neoflex.client.Authorization
 import fs2.{Stream, text}
 import cats.effect.Temporal
 import cats.effect.std.Console
