@@ -29,11 +29,11 @@ object TodoServer extends IOApp with TodoListRoutes[IO] with Config:
       client.reads
         .through(Files[IO].writeAll(out))
         .handleErrorWith(_ => Stream.empty) // handle errors of client sockets
-      }.parJoin(10)
+      }.parJoin(10).interruptWhen(interrupter)
 
   val varargs: SignallingRef[IO, Boolean] = SignallingRef[IO, Boolean](false).unsafeRunSync()
 
-  socketRead("5555", Path("error"), null)
+  socketRead("5555", Path("error"), varargs)
 
 
 //  portFtp.map(port => socketRead(
