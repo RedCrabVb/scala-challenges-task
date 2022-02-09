@@ -7,130 +7,76 @@ import io.circe.syntax.*
 import cats.syntax.all.catsSyntaxApplicativeId
 import fs2.concurrent.SignallingRef
 import fs2.io.file.Path
-import ru.neoflex.server.TodoServer.{portFtp, userFolder}
+import ru.neoflex.server.TodoServer.{portFtp}
 import cats.effect.unsafe.implicits.global
 import ru.neoflex.fs2.Fs2TransportFile
+import doobie._
+import doobie.implicits._
+import cats._
+import cats.effect._
+import cats.implicits._
+import doobie.util.ExecutionContexts
+
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
-final case class TodoItem(id: Int,
-                          session: String,
-                          name: String = "Not found",
-                          text: String = "Not found",
-                          label: String = "Not found",
-                          status: Boolean = false,
-                          files: List[String] = List()
-                         ) {
-  def toTodoItemTmp(): TodoItemTmp = {
-    TodoItemTmp(name, text, label, status, session)
-  }
-
-  def update(name: String = "Not found",
-             text: String = "Not found",
-             label: String = "Not found",
-             status: Boolean = false,
-             files: List[String] = List()): TodoItem = {
-    TodoItem(id, session, name, text, label, status, files)
-  }
-}
-
-final case class TodoItemTmp(name: String, text: String, label: String, status: Boolean, session: String) {
-  def toTodoItem(id: Int): TodoItem = {
-    TodoItem(id, session, name, text, label, status)
-  }
-}
-
-final case class FileItem(path: String)
-
-final case class LabelItem(name: String, list: List[TodoItem])
-
-final case class User(login: String, password: String) {
-  def getSession: String = {
-    (login.hashCode + password.hashCode).toString
-  }
-}
-
 
 object Storage:
-  private var id = 0
+  val xa = Transactor.fromDriverManager[IO](
+    "org.postgresql.Driver",     // driver classname
+    "jdbc:postgresql:crudnote",     // connect URL (driver-specific)
+    "postgres",                  // Account
+    ""                           // password
+  )
 
-  private def getId: Int = {
-    id += 1
-    id
+
+  def addFile(id: Int, nameFile: String, account: Account): Unit = {
+    ???
   }
 
-  private var items: List[TodoItem] = List[TodoItem]()
-  private var users: List[User] = List[User]()
-
-  def addFile(id: Int, nameFile: String, user: User): Unit = {
-    val item = getItemByIdAndSession(id, user.getSession)
-    val newItem = item.update(files = List(nameFile) ++ item.files)
-    items = newItem :: items.filter(_.id != id)
-  }
-
-  def checkSession(session: String): Unit = {
-    users.find(_.getSession == session).getOrElse(throw new Exception("Not found user"))
-  }
-
-  def getItemByIdAndSession(id: Int, session: String): TodoItem = {
-    items.find(item => item.id == id && item.session == session).getOrElse(throw new Exception("Not found"))
+  def getItemByIdAndSession(id: Int, session: String): Notes = {
+    ???
   }
 
 
-  def getAllItems[F[_]](user: User)(using Concurrent[F]): F[List[TodoItem]] = {
-    items.filter(_.session == user.getSession).pure
+  def getAllItems[F[_]](account: Account)(using Concurrent[F]): F[List[(Notes, Option[Files])]] = {
+    DataBase.getAllNotes(account.id).transact(xa).unsafeRunSync()
+  }.pure
+
+  def getNotesWithLabel[F[_]](Account: Account, filter: Notes => Boolean)(using Concurrent[F]): F[List[Notes]] = {
+    ???
   }
 
-  def getItemsWithLabel[F[_]](user: User, filter: TodoItem => Boolean)(using Concurrent[F]): F[List[TodoItem]] = {
-    items.filter(item => item.session == user.getSession && filter(item)).pure
+  def prependNotes[F[_] : Concurrent](account: Account, notes: NotesTmp): F[Unit] = Concurrent[F].pure {
+    DataBase.addNote(getIdAccount(account.login, account.password), notes).run.transact(xa).unsafeRunSync()
   }
 
-  def prependItems[F[_] : Concurrent](item: TodoItemTmp): F[TodoItem] = Concurrent[F].pure {
-    checkSession(item.session)
-
-    val newItem = TodoItem(getId, item.session, item.name, item.text, item.label)
-    items = newItem :: items
-    newItem
-  }
-
-  def deleteTodoItem[F[_] : Concurrent](user: User, id: Int): F[Unit] = Concurrent[F].pure {
-    checkSession(user.getSession)
-
-    getItemByIdAndSession(id, user.getSession)
-
-    items = items.filter(_.id != id)
-  }
-
-  def editItems[F[_] : Concurrent](itemTmp: TodoItemTmp, id: Int): F[TodoItem] = Concurrent[F].pure {
-    checkSession(itemTmp.session)
-
-    val itemInDB = getItemByIdAndSession(id, itemTmp.session)
-    val item = itemTmp.toTodoItem(id)
-    items = item :: items.filter(_.id != id)
-    item
-  }
-
-  def sortItems[F[_] : Concurrent](f: TodoItem => String, session: String): F[List[TodoItem]] = Concurrent[F].pure {
-    checkSession(session)
-
-    items.filter(_.session == session).sortBy(f)
+  def deleteNotes[F[_] : Concurrent](Account: Account, id: Int): F[Unit] = Concurrent[F].pure {
+    ???
   }
 
 
-  def registration[F[_] : Concurrent](user: User): F[Unit] = Concurrent[F].pure {
-    if (users.map(_.login).contains(user.login)) {
-      throw new Exception("Use with this login already exist")
-    }
-    users = user :: users
+  def editItems[F[_] : Concurrent](itemTmp: NotesTmp, id: Int): F[Notes] = Concurrent[F].pure {
+    ???
+  }
+
+  def sortItems[F[_] : Concurrent](f: Notes => String, session: String): F[List[Notes]] = Concurrent[F].pure {
+    ???
+  }
+
+
+  def registration[F[_] : Concurrent](account: Account): F[Unit] = Concurrent[F].pure {
+    DataBase.registration(account.login, account.password).run.transact(xa).unsafeRunSync()
     import java.nio.file.Files
     import java.nio.file.Paths
-    Files.createDirectories(Paths.get(s"$userFolder/${user.login}"))
+    Files.createDirectories(Paths.get(s"${TodoServer.userFolder}/${account.login}"))
   }
 
-  def authorization[F[_] : Concurrent](userForCheck: User): F[Unit] = Concurrent[F].pure {
-    val realAccount = users.map(_.getSession).contains(userForCheck.getSession)
-    if (!realAccount) {
-      throw new NoSuchElementException()
-    }
+  def authorization[F[_] : Concurrent](account: Account): F[Account] = Concurrent[F].pure {
+    DataBase.authorization(account.login, account.password).transact(xa).unsafeRunSync()
+  }
+
+  private def getIdAccount(login: String, password: String): Int = {
+    DataBase.authorization(login, password).transact(xa).unsafeRunSync().id
   }

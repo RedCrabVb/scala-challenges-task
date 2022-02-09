@@ -1,7 +1,7 @@
 package ru.neoflex.client
 
 import org.http4s.Uri
-import ru.neoflex.server.{TodoItem, TodoItemTmp, User}
+import ru.neoflex.server.{Account, Notes}
 
 
 sealed class Command
@@ -29,6 +29,6 @@ final case class Exit() extends Command
 final case class NotFoundCommand() extends Command
 
 object Cache {
-  var user: User = _
-  var notes: List[TodoItem] = _
+  var user: Account = _
+  var notes: List[Notes] = _
 }

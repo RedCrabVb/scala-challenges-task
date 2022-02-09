@@ -7,9 +7,9 @@ import fs2.Stream
 import fs2.concurrent.SignallingRef
 import fs2.io.file.{Files, Path}
 import fs2.io.net.{ConnectException, Network, Socket}
-import ru.neoflex.server.Storage.{checkSession, getItemByIdAndSession, items}
+import ru.neoflex.server.Storage.{getItemByIdAndSession}
 import ru.neoflex.server.TodoServer.{portFtp, userFolder}
-import ru.neoflex.server.User
+import ru.neoflex.server.{Account, Notes}
 import cats.effect.unsafe.implicits.global
 import ru.neoflex.client.TodoClient.host
 
@@ -27,8 +27,8 @@ object Fs2TransportFile {
     SignallingRef[IO, Boolean](true).unsafeRunSync()
   ).toMap
 
-  def blockPort(fileName: String, user: User): String = {
-    checkSession(user.getSession)
+  def blockPort(fileName: String, user: Account): String = {
+//    checkSession(user.getSession)
 
     val port = ftpPortBlock.find(_._2.get.unsafeRunSync() == true)
       .getOrElse(throw new Exception("Not found free port"))._1
@@ -38,8 +38,8 @@ object Fs2TransportFile {
     port
   }
 
-  def unblockPort(port: String, user: User): Unit = {
-    checkSession(user.getSession)
+  def unblockPort(port: String, user: Account): Unit = {
+//    checkSession(user.getSession)
     ftpPortBlock(port).getAndSet(true).unsafeRunSync()
   }
 

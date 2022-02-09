@@ -12,7 +12,7 @@ import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.circe.CirceEntityCodec.circeEntityDecoder
 import org.http4s.circe.*
 import ru.neoflex.Config
-import ru.neoflex.server.{TodoItem, TodoItemTmp, User}
+import ru.neoflex.server.{Account, Notes, NotesTmp}
 import io.circe.generic.auto.*
 import io.circe.syntax.*
 import cats.effect.unsafe.implicits.global
@@ -43,8 +43,8 @@ object TodoClient extends IOApp with Config :
       while (user == null) {
         val command = UI.authorization().unsafeRunSync()
         def sendUser(api: Uri, login: String, password: String) = {
-          val user = User(login, password)
-          (POST(user, registrationApi), user)
+          val account = Account(login, password)
+          (POST(account, api), account)
         }
         val post = command match {
           case Registration(login, password) =>
@@ -65,11 +65,10 @@ object TodoClient extends IOApp with Config :
           val command = UI.selectOperation().unsafeRunSync()
           val request: IO[ExitCode] = command match {
             case SendNote(name, text, label) =>
-              val userSession = user.getSession
-              val item = TodoItemTmp(name, text, label, false, userSession)
-              val postTodoItemAdd = POST(item, itemApiAdd)
+              val item = NotesTmp(name, text, label, false)
+              val postNotesAdd = POST(item, itemApiAdd)
               for
-                status <- client.status(postTodoItemAdd)
+                status <- client.status(postNotesAdd)
                 _ <- IO.println(s"Status: $status")
               yield
                 ExitCode.Success
@@ -77,7 +76,7 @@ object TodoClient extends IOApp with Config :
             case ShowNote() =>
               val postShowItem = GET(user, itemApiShow)
               for {
-                list <- client.expect[List[TodoItem]](postShowItem)
+                list <- client.expect[List[Notes]](postShowItem)
                 _ <- IO.delay({
                   Cache.notes = list
                 })
@@ -85,7 +84,7 @@ object TodoClient extends IOApp with Config :
               } yield ExitCode.Success
 
             case EditNote(id, name, text, label, status) =>
-              val updateNote = TodoItemTmp(name, text, label, status, user.getSession)
+              val updateNote = NotesTmp(name, text, label, status)
 
               val editNote = POST(updateNote, itemApiEdit(id))
 
@@ -99,7 +98,7 @@ object TodoClient extends IOApp with Config :
               val postShowItem = GET(user, api)
 
               for {
-                list <- client.expect[List[TodoItem]](postShowItem)
+                list <- client.expect[List[Notes]](postShowItem)
                 _ <- IO.println(UI.printTodoItem(list))
               } yield ExitCode.Success
 

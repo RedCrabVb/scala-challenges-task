@@ -1,7 +1,7 @@
 package ru.neoflex.client
 
 import cats.effect.IO
-import ru.neoflex.server.TodoItem
+import ru.neoflex.server.{Notes, NotesTmp}
 
 import scala.collection.mutable.ListBuffer
 import scala.io.StdIn.readLine
@@ -94,7 +94,7 @@ object UI {
       }
       note <- IO {
         Try(Cache.notes.find(_.id == id).head).
-          getOrElse(TodoItem(id, Cache.user.getSession))
+          getOrElse(Notes(id))
       }
       name <- getValue("name", note.name, readLine())
       text <- getValue("text", note.text, readLine())
@@ -204,15 +204,16 @@ object UI {
     }
   }
 
-  def printTodoItem(list: List[TodoItem]): String = {
-    "\n\n\n\n\n\n\n-----------------\n" + (for (item <- list) yield {
-      s"""id: ${item.id}
-         |name: ${item.name}
-         |text: ${item.text}
-         |label: ${item.label}
-         |status: ${item.status}
-         |files: ${item.files.mkString(", ")}
-         |-----------------""".stripMargin
-    }).mkString("\n")
+  def printTodoItem(list: List[Notes]): String = {
+//    "\n\n\n\n\n\n\n-----------------\n" + (for (item <- list) yield {
+//      s"""id: ${item.id}
+//         |name: ${item.name}
+//         |text: ${item.text}
+//         |label: ${item.label}
+//         |status: ${item.status}
+//         |files: ${item.files.mkString(", ")}
+//         |-----------------""".stripMargin
+//    }).mkString("\n")
+      ???
   }
 }
