@@ -13,28 +13,29 @@ import io.circe.syntax.*
 import io.circe.parser.*
 import ru.neoflex.fs2.Fs2TransportFile
 import ru.neoflex.server.Account
+import ru.neoflex.server.Storage.xa
 
 import java.util.Date
 
 //fixme: I would like to receive errors from api
-trait TodoListRoutes[F[_]]:
-  val dsl: Http4sDsl[F] = Http4sDsl[F]
+trait TodoListRoutes:
+  val dsl: Http4sDsl[IO] = Http4sDsl[IO]
   import dsl.*
 
-  def itemsRoutes(using Concurrent[F]): HttpRoutes[F] =
-    HttpRoutes.of[F] {
-      case req @ GET -> Root / "itemShow" =>
-        for
-          user <- req.as[Account]
-          items <- Storage.getAllItems[F](user)
-          resp <- Ok(items)
-        yield
-          resp
+  def itemsRoutes: HttpRoutes[IO] =
+    HttpRoutes.of[IO] {
+//      case req @ GET -> Root / "itemShow" =>
+//        for
+//          user <- req.as[Account]
+//          items <- ???///Storage.getAllItems(user).run.transact(xa)
+//          resp <- Ok(null)
+//        yield
+//          resp
       case req @ POST -> Root / "item" =>
         for
           notes <- req.as[(Account, NotesTmp)]
           newItem <- Storage.prependNotes(notes._1, notes._2)
-          _ <- println(s"Item add: $newItem").pure
+          _ <- IO.println(s"Item add: $newItem")
           resp <- Ok(newItem)
         yield
           resp
@@ -77,14 +78,14 @@ trait TodoListRoutes[F[_]]:
 //          resp
     }
 
-  def authorizationRoutes(using Concurrent[F]): HttpRoutes[F] =
-    HttpRoutes.of[F] {
+  def authorizationRoutes: HttpRoutes[IO] =
+    HttpRoutes.of[IO] {
 
       case req @ POST -> Root / "authorization" =>
         for
           account <- req.as[Account]
           result <- Storage.authorization(account)
-          _ <- println(s"authorization for $result").pure
+          _ <- IO.println(s"authorization for $result")
           resp <- Ok(result)
         yield
           resp
@@ -92,14 +93,14 @@ trait TodoListRoutes[F[_]]:
         for
           account <- req.as[Account]
           result <- Storage.registration(account)
-          _ <- println(s"registration for $account, session: ${result}").pure
+          _ <- IO.println(s"registration for $account, session: ${result}")
           resp <- Ok(account)
         yield
           resp
     }
 
-  def ftpRoutes(using Concurrent[F]): HttpRoutes[F] =
-    HttpRoutes.of[F] {
+  def ftpRoutes: HttpRoutes[IO] =
+    HttpRoutes.of[IO] {
       case req @ POST -> Root / "ftp" / userName / id / nameFile => ???
 //        for
 //          account <- req.as[Account]

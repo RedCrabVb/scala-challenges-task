@@ -31,50 +31,52 @@ object Storage:
   )
 
 
-  def addFile(id: Int, nameFile: String, account: Account): Unit = {
-    ???
+//  def addFile(id: Int, nameFile: String, account: Account): Unit = {
+//    ???
+//  }
+
+//  def getItemByIdAndSession(id: Int, session: String): Notes = {
+//    ???
+//  }
+
+
+//  def getAllItems[F[_]](account: Account)(using Concurrent[F]): F[List[(Notes, Option[Files])]] = {
+//    DataBase.getAllNotes(account.id).transact(xa).unsafeRunSync()
+//  }.pure
+//
+//  def getNotesWithLabel[F[_]](Account: Account, filter: Notes => Boolean)(using Concurrent[F]): F[List[Notes]] = {
+//    ???
+//  }
+//
+  def prependNotes(account: Account, notes: NotesTmp) = {
+    DataBase.addNote(getIdAccount(account.login, account.password), notes).run.transact(xa)
   }
-
-  def getItemByIdAndSession(id: Int, session: String): Notes = {
-    ???
-  }
-
-
-  def getAllItems[F[_]](account: Account)(using Concurrent[F]): F[List[(Notes, Option[Files])]] = {
-    DataBase.getAllNotes(account.id).transact(xa).unsafeRunSync()
-  }.pure
-
-  def getNotesWithLabel[F[_]](Account: Account, filter: Notes => Boolean)(using Concurrent[F]): F[List[Notes]] = {
-    ???
-  }
-
-  def prependNotes[F[_] : Concurrent](account: Account, notes: NotesTmp): F[Unit] = Concurrent[F].pure {
-    DataBase.addNote(getIdAccount(account.login, account.password), notes).run.transact(xa).unsafeRunSync()
-  }
-
-  def deleteNotes[F[_] : Concurrent](Account: Account, id: Int): F[Unit] = Concurrent[F].pure {
-    ???
-  }
+//
+//  def deleteNotes[F[_] : Concurrent](Account: Account, id: Int): F[Unit] = Concurrent[F].pure {
+//    ???
+//  }
+//
+//
+//  def editItems[F[_] : Concurrent](itemTmp: NotesTmp, id: Int): F[Notes] = Concurrent[F].pure {
+//    ???
+//  }
+//
+//  def sortItems[F[_] : Concurrent](f: Notes => String, session: String): F[List[Notes]] = Concurrent[F].pure {
+//    ???
+//  }
 
 
-  def editItems[F[_] : Concurrent](itemTmp: NotesTmp, id: Int): F[Notes] = Concurrent[F].pure {
-    ???
-  }
-
-  def sortItems[F[_] : Concurrent](f: Notes => String, session: String): F[List[Notes]] = Concurrent[F].pure {
-    ???
-  }
-
-
-  def registration[F[_] : Concurrent](account: Account): F[Unit] = Concurrent[F].pure {
-    DataBase.registration(account.login, account.password).run.transact(xa).unsafeRunSync()
+  def registration(account: Account): IO[Unit] = {
     import java.nio.file.Files
     import java.nio.file.Paths
-    Files.createDirectories(Paths.get(s"${TodoServer.userFolder}/${account.login}"))
+    for {
+      _ <- DataBase.registration(account.login, account.password).run.transact(xa)
+      _ <-  IO{Files.createDirectories(Paths.get(s"${TodoServer.userFolder}/${account.login}"))}
+    } yield ()
   }
 
-  def authorization[F[_] : Concurrent](account: Account): F[Account] = Concurrent[F].pure {
-    DataBase.authorization(account.login, account.password).transact(xa).unsafeRunSync()
+  def authorization(account: Account): IO[Account] = {
+    DataBase.authorization(account.login, account.password).transact(xa)
   }
 
   private def getIdAccount(login: String, password: String): Int = {
