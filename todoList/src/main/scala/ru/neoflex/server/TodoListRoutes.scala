@@ -40,7 +40,7 @@ trait TodoListRoutes:
           resp <- Ok(newItem)
         yield
           resp
-      case req @ GET -> Root / "item" / "filter" / filter / value => ???
+      case req @ GET -> Root / "item" / "filter" / filter / value =>
         for
           user <- req.as[Account]
           items <- Storage.getNotesWithLabel(user, filter match {
@@ -50,7 +50,7 @@ trait TodoListRoutes:
           resp <- Ok(items)
         yield
           resp
-      case req @ GET -> Root / "item" / "sort" / sort => ???
+      case req @ GET -> Root / "item" / "sort" / sort =>
         for
           user <- req.as[Account]
           items <- Storage.sortItems(sort match {
@@ -61,7 +61,7 @@ trait TodoListRoutes:
           resp <- Ok(items)
         yield
           resp
-      case req @ POST -> Root / "item" / "edit" / id => ???
+      case req @ POST -> Root / "item" / "edit" / id =>
         for
           item <- req.as[NotesTmp]
           _ <- Storage.editItems(item, id.toString.toInt)
@@ -69,7 +69,7 @@ trait TodoListRoutes:
           resp <- Ok(id)
         yield
           resp
-      case req @ POST -> Root / "item" / "delete" / id => ???
+      case req @ POST -> Root / "item" / "delete" / id =>
         for
           account <- req.as[Account]
           newItem <- Storage.deleteNotes(account, id.toInt)
@@ -102,7 +102,7 @@ trait TodoListRoutes:
 
   def ftpRoutes: HttpRoutes[IO] =
     HttpRoutes.of[IO] {
-      case req @ POST -> Root / "ftp" / userName / id / nameFile => ???
+      case req @ POST -> Root / "ftp" / userName / id / nameFile =>
         for
           account <- req.as[Account]
           port <- IO(Fs2TransportFile.blockPort(nameFile, account))
@@ -111,7 +111,7 @@ trait TodoListRoutes:
           resp <- Ok(port)
         yield
           resp
-      case req @ POST -> Root / "ftp" / port => ???
+      case req @ POST -> Root / "ftp" / port =>
         for
           user <- req.as[Account]
           _ <- IO{

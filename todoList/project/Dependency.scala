@@ -1,4 +1,4 @@
-import Dependency.version.{circeVersion, doobieVersion, fs2CoreVersion, http4sVersion}
+import Dependency.version.{circeVersion, doobieVersion, fs2CoreVersion, http4sVersion, scoptVersion}
 import sbt._
 
 object Dependency {
@@ -8,6 +8,7 @@ object Dependency {
     val fs2CoreVersion = "3.2.4"
     val circeVersion = "0.14.1"
     val doobieVersion = "1.0.0-RC2"
+    val scoptVersion = "4.0.1"
   }
 
   object http4s {
@@ -35,8 +36,12 @@ object Dependency {
 
   object doobie {
     val doobie = Seq(
-      "org.tpolecat" %% "doobie-core"     % doobieVersion,
+      "org.tpolecat" %% "doobie-core" % doobieVersion,
       "org.tpolecat" %% "doobie-postgres" % doobieVersion
     )
+  }
+
+  object scopt {
+    val scopt = "com.github.scopt" %% "scopt" % scoptVersion
   }
 }

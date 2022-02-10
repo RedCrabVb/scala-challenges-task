@@ -204,7 +204,7 @@ object UI {
     }
   }
 
-  def printTodoItem(list: List[(Notes, Option[ru.neoflex.server.Files])]): String = {
+  def printNotes(list: List[(Notes, Option[ru.neoflex.server.Files])]): String = {
     "\n\n\n\n\n\n\n-----------------\n" + (for ((item, files) <- list) yield {
       s"""id: ${item.id}
          |name: ${item.name}

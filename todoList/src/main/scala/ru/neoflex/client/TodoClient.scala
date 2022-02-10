@@ -33,12 +33,48 @@ import com.comcast.ip4s.Literals.host
 import fs2.io.file.{Files, Path}
 import cats.effect.Concurrent
 import ru.neoflex.fs2.Fs2TransportFile
+import scopt.OParser
+import scopt.OptionParser
 
+
+case class ConfigClient(login: String = "None",
+                  password: String = "None",
+                  showNotes: Boolean = false,
+                  changeNotes: Int = -1,
+                  loadFile: String = "None")
 
 
 object TodoClient extends IOApp with Config :
   def run(args: List[String]): IO[ExitCode] =
     BlazeClientBuilder[IO].resource.use { client =>
+      val parser = new OptionParser[ConfigClient]("client for REST") {
+        head("client", "1.x")
+
+        opt[String]('l', "login").text("login for service")
+          .action((value, config) => config.copy(value))
+        opt[String]('p', "password").text("password for service")
+          .action((value, config) => config.copy(password = value))
+        opt[String]('f', "path").text("send the file to the server, additional data is required")
+          .action((value, config) => config.copy(loadFile = value))
+        opt[Int]('c', "change").text("change notes, enter id")
+          .action((value, config) => config.copy(changeNotes = value))
+        opt[Unit]('s', "show").text("load and show notes")
+          .action((value, config) => config.copy(showNotes = true))
+
+        help("help").text("prints this usage text")
+      }
+
+      parser.parse(args, ConfigClient()) match {
+        case Some(config) =>
+          //      Picker.choose(config.objects, config.count).foreach(println)
+          println(config)
+
+
+        case None =>
+        // arguments are bad, error message will have been displayed
+      }
+
+
       UI.start().unsafeRunSync()
       while (user == null) {
         val command = UI.authorization().unsafeRunSync()
@@ -80,7 +116,7 @@ object TodoClient extends IOApp with Config :
                 _ <- IO.delay({
 //                  Cache.notes = list
                 })
-                _ <- IO.println(UI.printTodoItem(list))
+                _ <- IO.println(UI.printNotes(list))
               } yield ExitCode.Success
 
             case EditNote(id, name, text, label, status) =>
@@ -99,7 +135,7 @@ object TodoClient extends IOApp with Config :
 
               for {
                 list <- client.expect[List[(Notes, Option[ru.neoflex.server.Files])]](postShowItem)
-                _ <- IO.println(UI.printTodoItem(list))
+                _ <- IO.println(UI.printNotes(list))
               } yield ExitCode.Success
 
             case Delete(id) =>
