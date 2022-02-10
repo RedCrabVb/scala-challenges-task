@@ -5,6 +5,6 @@ trait Config {
   val host = "localhost"
   val baseUrl = s"http://$host:$port"
   
-  val portFtp = List(9080, 9081, 9082, 9083)
+  val portsFtp = List(9080, 9081, 9082, 9083)
   val userFolder = "./userFolder"
 }

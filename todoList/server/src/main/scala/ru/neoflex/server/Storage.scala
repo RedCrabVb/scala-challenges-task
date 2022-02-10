@@ -7,16 +7,16 @@ import io.circe.syntax.*
 import cats.syntax.all.catsSyntaxApplicativeId
 import fs2.concurrent.SignallingRef
 import fs2.io.file.Path
-import ru.neoflex.server.TodoServer.{portFtp}
+import ru.neoflex.server.TodoServer.portsFtp
 import cats.effect.unsafe.implicits.global
-import ru.neoflex.fs2.Fs2TransportFile
-import doobie._
-import doobie.implicits._
-import cats._
-import cats.effect._
-import cats.implicits._
+import doobie.*
+import doobie.implicits.*
+import cats.*
+import cats.effect.*
+import cats.implicits.*
 import doobie.util.ExecutionContexts
-
+import ru.neoflex.{Account, Files, Notes, NotesTmp}
+import ru.neoflex.fs2.Fs2TransportFile
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer

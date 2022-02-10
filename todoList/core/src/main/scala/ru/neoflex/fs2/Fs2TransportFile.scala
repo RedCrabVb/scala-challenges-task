@@ -7,23 +7,20 @@ import fs2.Stream
 import fs2.concurrent.SignallingRef
 import fs2.io.file.{Files, Path}
 import fs2.io.net.{ConnectException, Network, Socket}
-//import ru.neoflex.server.Storage.{getItemByIdAndSession}
-import ru.neoflex.server.TodoServer.{portFtp, userFolder}
-import ru.neoflex.server.{Account, Notes}
+import ru.neoflex.{Account, Config}
 import cats.effect.unsafe.implicits.global
-import ru.neoflex.client.TodoClient.host
 
-import scala.concurrent.duration.*
 import scala.collection.mutable
+import scala.concurrent.duration.*
 
 //todo: remove file, download file
-object Fs2TransportFile {
+object Fs2TransportFile extends Config {
   private val ftpPortAndPath: mutable.Map[String, Path] = {
     val map = scala.collection.mutable.Map("5555" -> Path("userFolder/error"))
-    portFtp.foreach(p => map(p.toString) = Path(s"$userFolder/none"))
+    portsFtp.foreach(p => map(p.toString) = Path(s"$userFolder/none"))
     map
   }
-  private val ftpPortBlock: Map[String, SignallingRef[IO, Boolean]] = portFtp.map(x => x.toString ->
+  private val ftpPortBlock: Map[String, SignallingRef[IO, Boolean]] = portsFtp.map(x => x.toString ->
     SignallingRef[IO, Boolean](true).unsafeRunSync()
   ).toMap
 

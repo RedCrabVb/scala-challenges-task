@@ -1,7 +1,7 @@
 package ru.neoflex.client
 
 import cats.effect.IO
-import ru.neoflex.server.{Notes, NotesTmp}
+import ru.neoflex.{Notes, NotesTmp}
 
 import scala.collection.mutable.ListBuffer
 import scala.io.StdIn.readLine
@@ -204,7 +204,7 @@ object UI {
     }
   }
 
-  def printNotes(list: List[(Notes, Option[ru.neoflex.server.Files])]): String = {
+  def printNotes(list: List[(Notes, Option[ru.neoflex.Files])]): String = {
     "\n\n\n\n\n\n\n-----------------\n" + (for ((item, files) <- list) yield {
       s"""id: ${item.id}
          |name: ${item.name}

@@ -6,7 +6,6 @@ import cats.effect.{Concurrent, ExitCode, IO, IOApp}
 import cats.implicits.*
 import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.implicits.*
-import ru.neoflex.Config
 import fs2.{INothing, Stream, text}
 import fs2.io.file.{Files, Path}
 import fs2.io.net.{Network, Socket}
@@ -21,6 +20,7 @@ import ru.neoflex.server.Storage
 
 import java.time.format.DateTimeFormatter
 import scala.collection.mutable
+import ru.neoflex.Config
 
 object TodoServer extends IOApp with TodoListRoutes with Config:
   import java.nio.file.Files

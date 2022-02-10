@@ -11,8 +11,9 @@ import org.http4s.{EntityEncoder, HttpRoutes}
 import io.circe.generic.auto.*
 import io.circe.syntax.*
 import io.circe.parser.*
+import ru.neoflex.{Account, Notes, NotesTmp}
 import ru.neoflex.fs2.Fs2TransportFile
-import ru.neoflex.server.Account
+import ru.neoflex.Account
 import ru.neoflex.server.Storage.xa
 
 import java.util.Date

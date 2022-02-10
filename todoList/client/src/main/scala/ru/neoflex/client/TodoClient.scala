@@ -12,7 +12,7 @@ import org.http4s.circe.CirceEntityCodec.circeEntityEncoder
 import org.http4s.circe.CirceEntityCodec.circeEntityDecoder
 import org.http4s.circe.*
 import ru.neoflex.Config
-import ru.neoflex.server.{Account, Notes, NotesTmp}
+import ru.neoflex.{Account, Notes, NotesTmp}
 import io.circe.generic.auto.*
 import io.circe.syntax.*
 import cats.effect.unsafe.implicits.global
@@ -22,6 +22,7 @@ import scala.concurrent.duration.*
 import scala.util.control.Breaks.*
 import scala.io.StdIn.readLine
 import Api.*
+import ru.neoflex.Files
 import com.comcast.ip4s.{Literals, SocketAddress}
 import fs2.io.net.{ConnectException, Network, Socket}
 import ru.neoflex.client.Cache.*
@@ -48,7 +49,7 @@ object TodoClient extends IOApp with Config :
   def run(args: List[String]): IO[ExitCode] =
     BlazeClientBuilder[IO].resource.use { client =>
       val parser = new OptionParser[ConfigClient]("client for REST") {
-        head("client", "1.x")
+        head("ru/neoflex/client", "1.x")
 
         opt[String]('l', "login").text("login for service")
           .action((value, config) => config.copy(value))
@@ -112,7 +113,7 @@ object TodoClient extends IOApp with Config :
             case ShowNote() =>
               val postShowItem = GET(user, itemApiShow)
               for {
-                list <- client.expect[List[(Notes, Option[ru.neoflex.server.Files])]](postShowItem)
+                list <- client.expect[List[(Notes, Option[ru.neoflex.Files])]](postShowItem)
                 _ <- IO.delay({
 //                  Cache.notes = list
                 })
@@ -134,7 +135,7 @@ object TodoClient extends IOApp with Config :
               val postShowItem = GET(user, api)
 
               for {
-                list <- client.expect[List[(Notes, Option[ru.neoflex.server.Files])]](postShowItem)
+                list <- client.expect[List[(Notes, Option[ru.neoflex.Files])]](postShowItem)
                 _ <- IO.println(UI.printNotes(list))
               } yield ExitCode.Success
 

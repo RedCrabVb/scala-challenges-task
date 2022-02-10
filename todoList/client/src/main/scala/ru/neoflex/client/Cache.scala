@@ -1,7 +1,7 @@
 package ru.neoflex.client
 
 import org.http4s.Uri
-import ru.neoflex.server.{Account, Notes}
+import ru.neoflex.{Account, Notes}
 
 
 sealed class Command

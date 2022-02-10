@@ -1,20 +1,13 @@
 package ru.neoflex.server
 
-import doobie._
-import doobie.implicits._
-import cats._
-import cats.effect._
-import cats.implicits._
+import doobie.*
+import doobie.implicits.*
+import cats.*
+import cats.effect.*
+import cats.implicits.*
 import doobie.util.ExecutionContexts
+import ru.neoflex.{Account, NotesTmp, Notes, Files}
 
-
-final case class Account(login: String, password: String, id: Int = -1)
-final case class Notes(idUser: Int = -1, name: String = "Not found",
-                       text: String = "Not found", label: String = "Not found",
-                       status: Boolean = false, id: Int = -1)
-final case class Files(idNote: Int, name: String)
-
-final case class NotesTmp(name: String, text: String, label: String, status: Boolean)
 
 object DataBase {
   def registration(login: String, password: String): doobie.Update0 = {
