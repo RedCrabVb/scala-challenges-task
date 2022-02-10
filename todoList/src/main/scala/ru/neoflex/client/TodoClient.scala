@@ -66,7 +66,7 @@ object TodoClient extends IOApp with Config :
           val request: IO[ExitCode] = command match {
             case SendNote(name, text, label) =>
               val item = NotesTmp(name, text, label, false)
-              val postNotesAdd = POST(item, itemApiAdd)
+              val postNotesAdd = POST((user, item), itemApiAdd)
               for
                 status <- client.status(postNotesAdd)
                 _ <- IO.println(s"Status: $status")
@@ -76,9 +76,9 @@ object TodoClient extends IOApp with Config :
             case ShowNote() =>
               val postShowItem = GET(user, itemApiShow)
               for {
-                list <- client.expect[List[Notes]](postShowItem)
+                list <- client.expect[List[(Notes, Option[ru.neoflex.server.Files])]](postShowItem)
                 _ <- IO.delay({
-                  Cache.notes = list
+//                  Cache.notes = list
                 })
                 _ <- IO.println(UI.printTodoItem(list))
               } yield ExitCode.Success
@@ -98,7 +98,7 @@ object TodoClient extends IOApp with Config :
               val postShowItem = GET(user, api)
 
               for {
-                list <- client.expect[List[Notes]](postShowItem)
+                list <- client.expect[List[(Notes, Option[ru.neoflex.server.Files])]](postShowItem)
                 _ <- IO.println(UI.printTodoItem(list))
               } yield ExitCode.Success
 

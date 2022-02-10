@@ -204,16 +204,15 @@ object UI {
     }
   }
 
-  def printTodoItem(list: List[Notes]): String = {
-//    "\n\n\n\n\n\n\n-----------------\n" + (for (item <- list) yield {
-//      s"""id: ${item.id}
-//         |name: ${item.name}
-//         |text: ${item.text}
-//         |label: ${item.label}
-//         |status: ${item.status}
-//         |files: ${item.files.mkString(", ")}
-//         |-----------------""".stripMargin
-//    }).mkString("\n")
-      ???
+  def printTodoItem(list: List[(Notes, Option[ru.neoflex.server.Files])]): String = {
+    "\n\n\n\n\n\n\n-----------------\n" + (for ((item, files) <- list) yield {
+      s"""id: ${item.id}
+         |name: ${item.name}
+         |text: ${item.text}
+         |label: ${item.label}
+         |status: ${item.status}
+         |files: ${files.getOrElse(List())}
+         |-----------------""".stripMargin
+    }).mkString("\n")
   }
 }

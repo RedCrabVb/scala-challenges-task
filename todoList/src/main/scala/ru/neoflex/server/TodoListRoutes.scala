@@ -26,7 +26,8 @@ trait TodoListRoutes:
     HttpRoutes.of[IO] {
       case req @ GET -> Root / "itemShow" =>
         for
-          user <- req.as[Account]
+          accountTmp <- req.as[Account]
+          user <- Storage.authorization(accountTmp)
           items <- Storage.getAllItems(user)
           resp <- Ok(items)
         yield
