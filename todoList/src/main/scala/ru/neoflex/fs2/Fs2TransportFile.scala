@@ -38,9 +38,9 @@ object Fs2TransportFile {
     port
   }
 
-  def unblockPort(port: String, user: Account): Unit = {
+  def unblockPort(port: String, user: Account): IO[Boolean] = {
 //    checkSession(user.getSession)
-    ftpPortBlock(port).getAndSet(true).unsafeRunSync()
+    ftpPortBlock(port).getAndSet(true)
   }
 
 

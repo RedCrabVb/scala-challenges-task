@@ -24,46 +24,47 @@ import scala.collection.mutable.ListBuffer
 
 object Storage:
   val xa = Transactor.fromDriverManager[IO](
-    "org.postgresql.Driver",     // driver classname
-    "jdbc:postgresql:crudnote",     // connect URL (driver-specific)
-    "postgres",                  // Account
-    ""                           // password
+    "org.postgresql.Driver", // driver classname
+    "jdbc:postgresql:crudnote", // connect URL (driver-specific)
+    "postgres", // Account
+    "" // password
   )
 
 
-//  def addFile(id: Int, nameFile: String, account: Account): Unit = {
-//    ???
-//  }
+  def addFile(id: Int, nameFile: String, account: Account): IO[Unit] = {
+    IO{???}
+  }
 
-//  def getItemByIdAndSession(id: Int, session: String): Notes = {
-//    ???
-//  }
+  //  def getItemByIdAndSession(id: Int, session: String): Notes = {
+  //    ???
+  //  }
 
 
-//  def getAllItems[F[_]](account: Account)(using Concurrent[F]): F[List[(Notes, Option[Files])]] = {
-//    DataBase.getAllNotes(account.id).transact(xa).unsafeRunSync()
-//  }.pure
-//
-//  def getNotesWithLabel[F[_]](Account: Account, filter: Notes => Boolean)(using Concurrent[F]): F[List[Notes]] = {
-//    ???
-//  }
-//
+  def getAllItems(account: Account): IO[List[(Notes, Option[Files])]] = {
+    DataBase.getAllNotes(account.id).transact(xa)
+  }
+
+  def getNotesWithLabel(account: Account, filter: Notes => Boolean): IO[List[(Notes, Option[Files])]] = {
+//    DataBase.getAllNotes(account.id).transact(xa)
+    IO{???}
+  }
+
   def prependNotes(account: Account, notes: NotesTmp) = {
     DataBase.addNote(getIdAccount(account.login, account.password), notes).run.transact(xa)
   }
-//
-//  def deleteNotes[F[_] : Concurrent](Account: Account, id: Int): F[Unit] = Concurrent[F].pure {
-//    ???
-//  }
-//
-//
-//  def editItems[F[_] : Concurrent](itemTmp: NotesTmp, id: Int): F[Notes] = Concurrent[F].pure {
-//    ???
-//  }
-//
-//  def sortItems[F[_] : Concurrent](f: Notes => String, session: String): F[List[Notes]] = Concurrent[F].pure {
-//    ???
-//  }
+
+  def deleteNotes(Account: Account, id: Int): IO[Unit] = {
+    IO{???}
+  }
+
+
+  def editItems(itemTmp: NotesTmp, id: Int): IO[Int] = {
+    DataBase.editNote(id, itemTmp.name, itemTmp.text, itemTmp.label, itemTmp.status).run.transact(xa)
+  }
+
+  def sortItems(f: Notes => String, session: String): IO[List[Notes]] = {
+    IO{???}
+  }
 
 
   def registration(account: Account): IO[Unit] = {
@@ -71,7 +72,9 @@ object Storage:
     import java.nio.file.Paths
     for {
       _ <- DataBase.registration(account.login, account.password).run.transact(xa)
-      _ <-  IO{Files.createDirectories(Paths.get(s"${TodoServer.userFolder}/${account.login}"))}
+      _ <- IO {
+        Files.createDirectories(Paths.get(s"${TodoServer.userFolder}/${account.login}"))
+      }
     } yield ()
   }
 

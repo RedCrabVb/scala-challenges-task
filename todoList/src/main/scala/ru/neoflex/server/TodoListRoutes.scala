@@ -24,13 +24,13 @@ trait TodoListRoutes:
 
   def itemsRoutes: HttpRoutes[IO] =
     HttpRoutes.of[IO] {
-//      case req @ GET -> Root / "itemShow" =>
-//        for
-//          user <- req.as[Account]
-//          items <- ???///Storage.getAllItems(user).run.transact(xa)
-//          resp <- Ok(null)
-//        yield
-//          resp
+      case req @ GET -> Root / "itemShow" =>
+        for
+          user <- req.as[Account]
+          items <- Storage.getAllItems(user)
+          resp <- Ok(items)
+        yield
+          resp
       case req @ POST -> Root / "item" =>
         for
           notes <- req.as[(Account, NotesTmp)]
@@ -40,42 +40,42 @@ trait TodoListRoutes:
         yield
           resp
       case req @ GET -> Root / "item" / "filter" / filter / value => ???
-//        for
-//          user <- req.as[Notes]
-//          items <- Storage.getNotesWithLabel[F](user, filter match {
-//            case "label" => (item: TodoItem) => item.label == value
-//            case "status" => (item: TodoItem) => item.status == value.toBoolean
-//          })
-//          resp <- Ok(items)
-//        yield
-//          resp
+        for
+          user <- req.as[Account]
+          items <- Storage.getNotesWithLabel(user, filter match {
+            case "label" => (item: Notes) => item.label == value
+            case "status" => (item: Notes) => item.status == value.toBoolean
+          })
+          resp <- Ok(items)
+        yield
+          resp
       case req @ GET -> Root / "item" / "sort" / sort => ???
-//        for
-//          user <- req.as[User]
-//          items <- Storage.sortItems[F](sort match {
-//            case "text" => (item: TodoItem) => item.text
-//            case "name" => (item: TodoItem) => item.name
-//            case _ => ???
-//          }, user.getSession)
-//          resp <- Ok(items)
-//        yield
-//          resp
+        for
+          user <- req.as[Account]
+          items <- Storage.sortItems(sort match {
+            case "text" => (item: Notes) => item.text
+            case "name" => (item: Notes) => item.name
+            case _ => ???
+          }, null)
+          resp <- Ok(items)
+        yield
+          resp
       case req @ POST -> Root / "item" / "edit" / id => ???
-//        for
-//          item <- req.as[TodoItemTmp]
-//          newItem <- Storage.editItems(item, id.toString.toInt)
-//          _ <- println(s"Edit item: $newItem").pure
-//          resp <- Ok(newItem)
-//        yield
-//          resp
+        for
+          item <- req.as[NotesTmp]
+          _ <- Storage.editItems(item, id.toString.toInt)
+          _ <- IO.println(s"Edit item id: $id")
+          resp <- Ok(id)
+        yield
+          resp
       case req @ POST -> Root / "item" / "delete" / id => ???
-//        for
-//          user <- req.as[User]
-//          newItem <- Storage.deleteTodoItem(user, id.toInt)
-//          _ <- println(s"Delete item: $id").pure
-//          resp <- Ok(newItem)
-//        yield
-//          resp
+        for
+          account <- req.as[Account]
+          newItem <- Storage.deleteNotes(account, id.toInt)
+          _ <- IO.println(s"Delete item: $id")
+          resp <- Ok(newItem)
+        yield
+          resp
     }
 
   def authorizationRoutes: HttpRoutes[IO] =
@@ -102,19 +102,21 @@ trait TodoListRoutes:
   def ftpRoutes: HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case req @ POST -> Root / "ftp" / userName / id / nameFile => ???
-//        for
-//          account <- req.as[Account]
-//          port <- Concurrent[F].pure(Fs2TransportFile.blockPort(nameFile, account))
-//          _ <- Concurrent[F].pure(Storage.addFile(id.toInt, nameFile, account))
-//          _ <- println(s"save file ${account.getSession} on port: $port").pure
-//          resp <- Ok(port)
-//        yield
-//          resp
+        for
+          account <- req.as[Account]
+          port <- IO(Fs2TransportFile.blockPort(nameFile, account))
+          _ <- IO(Storage.addFile(id.toInt, nameFile, account))
+          _ <- IO.println(s"save file ${account.login} on port: $port")
+          resp <- Ok(port)
+        yield
+          resp
       case req @ POST -> Root / "ftp" / port => ???
-//        for
-//          user <- req.as[User]
-//          _ <- Concurrent[F].pure(Fs2TransportFile.unblockPort(port, user))
-//          resp <- Ok(port)
-//        yield
-//          resp
+        for
+          user <- req.as[Account]
+          _ <- IO{
+            Fs2TransportFile.unblockPort(port, user)
+          }
+          resp <- Ok(port)
+        yield
+          resp
     }
