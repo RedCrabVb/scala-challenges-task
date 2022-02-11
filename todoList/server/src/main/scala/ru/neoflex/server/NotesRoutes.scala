@@ -19,7 +19,7 @@ import ru.neoflex.server.Storage.xa
 import java.util.Date
 
 //fixme: I would like to receive errors from api
-trait TodoListRoutes:
+trait NotesRoutes:
   val dsl: Http4sDsl[IO] = Http4sDsl[IO]
   import dsl.*
 

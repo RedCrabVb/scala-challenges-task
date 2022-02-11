@@ -24,9 +24,8 @@ final case class Authorization(login: String, password: String) extends Command
 
 final case class Registration(login: String, password: String) extends Command
 
-final case class Exit() extends Command
+final case class UnitCommand() extends Command
 
-final case class NotFoundCommand() extends Command
 
 object Cache {
   var user: Account = _

@@ -22,7 +22,7 @@ import java.time.format.DateTimeFormatter
 import scala.collection.mutable
 import ru.neoflex.Config
 
-object TodoServer extends IOApp with TodoListRoutes with Config:
+object NotesServer extends IOApp with NotesRoutes with Config:
   import java.nio.file.Files
   import java.nio.file.Paths
   Files.createDirectories(Paths.get(userFolder))

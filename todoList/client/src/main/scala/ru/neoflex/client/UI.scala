@@ -9,7 +9,7 @@ import scala.util.Try
 import scala.util.hashing.Hashing.Default
 
 object UI {
-  private[this] def sendNote(): IO[Command] = {
+  def addNote(): IO[Command] = {
     for
       _ <- IO.println("Enter name note")
       name <- IO.readLine
@@ -55,7 +55,7 @@ object UI {
     }
   }
 
-  private[this] def editNote(): IO[Command] = {
+  def editNote(id: Int): IO[Command] = {
     def changeThisField(field: String, value: => String): IO[Boolean] = {
       for
         _ <- IO.println("Current data: " + value)
@@ -88,10 +88,6 @@ object UI {
     }
 
     for {
-      _ <- IO.println("Enter id note")
-      id <- IO {
-        readLine().toInt
-      }
       note <- IO {
         Try(Cache.notes.find(_.id == id).head).
           getOrElse(Notes(id))
@@ -105,104 +101,58 @@ object UI {
     }
   }
 
-  def start(): IO[Unit] = {
-    IO.println(
-      """
-        |In the program you can:
-        |* send notes
-        |* attach to notes big files
-        |* authorization and registration
-        |""".stripMargin)
-  }
-
-  def authorization(): IO[Command] = {
-    for {
-      _ <- IO.println("Authorization on registration in account")
-      _ <- IO.println("Select command: ")
-      _ <- IO.println(
-        """
-          |1. Authorization
-          |2. Registration""".stripMargin)
-      commandStr <- IO.readLine
-      command <- commandStr match {
-        case "1" =>
-          for {
-            _ <- IO.println("Enter your login")
-            login <- IO.readLine
-            _ <- IO.println("Enter your password")
-            password <- IO.readLine
-          } yield {
-            Authorization(login, password)
-          }
-        case "2" =>
-          for
-            _ <- IO.println("Enter your login")
-            login <- IO.readLine
-            _ <- IO.println("Enter your password")
-            password <- IO.readLine
-          yield
-            Registration(login, password)
-      }
-    } yield
-      command
-
-  }
-
-  def selectOperation(): IO[Command] = {
-    for {
-      _ <- IO.println("\n\nSelect command: ")
-      _ <- IO.println(
-        """
-          |1. Send note
-          |2. Show notes
-          |3. Show notes with for filter
-          |4. Edit note
-          |5. Delete note
-          |-6. Loading file-
-          |-7. Delete file-
-          |8. Upload file
-          |9. Exit
-          |""".stripMargin)
-      command <- IO.readLine
-      result <- command match {
-        case "1" =>
-          sendNote()
-        case "2" => IO {
-          ShowNote()
-        }
-        case "3" =>
-          filterAndSort()
-        case "4" =>
-          editNote()
-        case "5" =>
-          for
-            _ <- IO.println("Enter id")
-            id <- IO.readLine
-          yield
-            Delete(id.toInt)
-        case "6" => IO.delay(RemoveFile())
-        case "8" => { for {
-            _ <- IO.println("Enter id note")
-            id <- IO.delay(readLine().toInt)
-            _ <- IO.println("Enter name file")
-            nameFile <- IO.readLine
-            _ <- IO.println("Enter path to file")
-            pathToFile <- IO.readLine
-          } yield {
-            UploadFile(
-              Api.ftpApi(id.toString, nameFile, Cache.user.login),
-              pathToFile,
-              nameFile
-            )
-          }
-        }
-        case "9" => IO.delay(Exit())
-        case _ => IO.delay(NotFoundCommand())
-      }
-    } yield {
-      result
-    }
-  }
+//  def selectOperation(): IO[Command] = {
+//        """
+//          |1. Send note
+//          |2. Show notes
+//          |3. Show notes with for filter
+//          |4. Edit note
+//          |5. Delete note
+//          |-6. Loading file-
+//          |-7. Delete file-
+//          |8. Upload file
+//          |9. Exit
+//          |""".stripMargin)
+//      command <- IO.readLine
+//      result <- command match {
+//        case "1" =>
+//          sendNote()
+//        case "2" => IO {
+//          ShowNote()
+//        }
+//        case "3" =>
+//          filterAndSort()
+//        case "4" =>
+//          editNote()
+//        case "5" =>
+//          for
+//            _ <- IO.println("Enter id")
+//            id <- IO.readLine
+//          yield
+//            Delete(id.toInt)
+//        case "6" => IO.delay(RemoveFile())
+//        case "8" => { for {
+//            _ <- IO.println("Enter id note")
+//            id <- IO.delay(readLine().toInt)
+//            _ <- IO.println("Enter name file")
+//            nameFile <- IO.readLine
+//            _ <- IO.println("Enter path to file")
+//            pathToFile <- IO.readLine
+//          } yield {
+//            UploadFile(
+//              Api.ftpApi(id.toString, nameFile, Cache.user.login),
+//              pathToFile,
+//              nameFile
+//            )
+//          }
+//        }
+//        case "9" => IO.delay(Exit())
+//        case _ => IO.delay(NotFoundCommand())
+//      }
+//    } yield {
+//      result
+//    }
+//  }
 
   def printNotes(list: List[(Notes, Option[ru.neoflex.Files])]): String = {
     "\n\n\n\n\n\n\n-----------------\n" + (for ((item, files) <- list) yield {
@@ -215,4 +165,5 @@ object UI {
          |-----------------""".stripMargin
     }).mkString("\n")
   }
+
 }
