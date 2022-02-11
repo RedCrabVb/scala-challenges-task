@@ -25,7 +25,7 @@ object Fs2TransportFile extends Config {
   ).toMap
 
   def blockPort(fileName: String, account: Account): String = {
-
+    //Ещё не придумал, как их аккуратно соединить, убрав побочные эффекты
     val port = ftpPortBlock.find(_._2.get.unsafeRunSync() == true)
       .getOrElse(throw new Exception("Not found free port"))._1
     ftpPortAndPath(port) = Path(s"$userFolder/${account.login}/$fileName")

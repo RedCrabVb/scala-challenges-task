@@ -17,7 +17,7 @@ import ru.neoflex.{Account, Notes, NotesTmp}
 import io.circe.generic.auto.*
 import io.circe.syntax.*
 import cats.effect.unsafe.implicits.global
-import ru.neoflex.client.TodoClient.baseUrl
+import ru.neoflex.client.NotesClient.baseUrl
 
 import scala.concurrent.duration.*
 import scala.util.control.Breaks.*
@@ -37,7 +37,7 @@ import ru.neoflex.fs2.Fs2TransportFile
 import scopt.OParser
 import scopt.OptionParser
 
-object TodoClient extends IOApp with Config :
+object NotesClient extends IOApp with Config :
   def run(args: List[String]): IO[ExitCode] =
     BlazeClientBuilder[IO].resource.use { client =>
 
@@ -97,7 +97,7 @@ object TodoClient extends IOApp with Config :
             account <- client.successful(post._1).flatMap(if (_) { post._2} else {throw new Exception("Failed to connect")})
             notes <- client.expect[NotesAndFile](GET(account, noteApiLoad))
             _ <- IO(config.showNotes).flatMap(if (_) IO.println(UI.printNotes(notes)) else IO.unit)
-            statusDelete <- IO(config.deleteNote != 0).flatMap {
+            statusDelete <- IO(config.deleteNote != -1).flatMap {
               if (_) {
                 client.status(POST(account, Api.notesApiDelete(config.deleteNote)))
               } else IO.unit

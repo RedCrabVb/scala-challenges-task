@@ -1,7 +1,7 @@
 package ru.neoflex.client
 
 import org.http4s.Uri
-import ru.neoflex.client.TodoClient.baseUrl
+import ru.neoflex.client.NotesClient.baseUrl
 
 object Api {
   val uri: String => Uri = Uri.fromString(_).getOrElse(???)

@@ -33,10 +33,10 @@ object ConfigParser {
       .action((value, config) => config.copy(loadFile = value))
     opt[String]("sort").text("sort notes by filed, example --sort text")
       .action((value, config) => config.copy(sortByFiled = value))
-    opt[String]("filter").text("show notes with filter, example: --filter status=true (!!!There must be one equal sign!!!)")
+    opt[Map[String, String]]("filter").text("show notes with filter, example: --filter status=true (!!!There must be one equal sign!!!)")
       .action((value, config) => config.copy(showWithFilter = {
-        val str = value.split("=")
-        (str(0), str(1))
+        val filed = value.keys.head
+        (filed, value(filed))
       }))
     opt[Int]('c', "change").text("change notes, enter id")
       .action((value, config) => config.copy(changeNotes = (notes: NotesAndFile) => UI.editNote(value, notes)))
@@ -44,12 +44,11 @@ object ConfigParser {
       .action((value, config) => config.copy(deleteNote = value))
     opt[Unit]('s', "show").text("load and show notes")
       .action((value, config) => config.copy(showNotes = true))
-    opt[String]('s', "uploadFile").text("enter path to file and name file on server, example: --uploadFile 33|./local.txt|server.txt")
+    opt[Seq[String]]('s', "uploadFile").text("enter path to file and name file on server, example: --uploadFile 33,local.txt,server.txt")
       .action((value, config) => {
-        val pathAndNameAndId = value.split("\\|")
         val update: (String) => Command = (login: String) => UploadFile(
-          Api.ftpApi(pathAndNameAndId(0).toInt, pathAndNameAndId(2), login),
-          pathAndNameAndId(1),
+          Api.ftpApi(value(0).toInt, value(2), login),
+          value(1),
         )
         config.copy(uploadFile = update)}
       )
