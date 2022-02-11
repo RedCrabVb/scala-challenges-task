@@ -69,46 +69,22 @@ object UI {
     }
   }
 
-//  def selectOperation(): IO[Command] = {
-//        """
-//          |1. Send note
-//          |2. Show notes
-//          |3. Show notes with for filter
-//          |4. Edit note
-//          |5. Delete note
-//          |-6. Loading file-
-//          |-7. Delete file-
-//          |8. Upload file
-//          |9. Exit
-//          |""".stripMargin)
-//      command <- IO.readLine
+  def printNotes(listUncompressed: List[(Notes, Option[Files])]): String = {
+    var list = List[(Notes, List[Option[Files]])]()//fixme: переписать этот код в адекватном состояние
+    listUncompressed.foreach(e => if (!list.exists(_._1.id == e._1.id)) {
+      list = (e._1, List(e._2)) :: list
+    } else {
+      val addE: List[Option[Files]] = list.find(_._1.id == e._1.id).get._2 ++ List(e._2)
+      list = (e._1, addE) :: list.filter(_._1.id != e._1.id)
+    })
 
-//        case "8" => { for {
-//            _ <- IO.println("Enter id note")
-//            id <- IO.delay(readLine().toInt)
-//            _ <- IO.println("Enter name file")
-//            nameFile <- IO.readLine
-//            _ <- IO.println("Enter path to file")
-//            pathToFile <- IO.readLine
-//          } yield {
-//            UploadFile(
-//              Api.ftpApi(id.toString, nameFile, Cache.user.login),
-//              pathToFile,
-//              nameFile
-//            )
-//          }
-//        }
-
-//  }
-
-  def printNotes(list: List[(Notes, Option[ru.neoflex.Files])]): String = {
     "\n\n\n\n\n\n\n-----------------\n" + (for ((item, files) <- list) yield {
       s"""id: ${item.id}
          |name: ${item.name}
          |text: ${item.text}
          |label: ${item.label}
          |status: ${item.status}
-         |files: ${files.getOrElse(List())}
+         |files: ${files.mkString(", ")}
          |-----------------""".stripMargin
     }).mkString("\n")
   }

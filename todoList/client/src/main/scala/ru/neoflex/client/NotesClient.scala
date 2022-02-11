@@ -37,9 +37,6 @@ import ru.neoflex.fs2.Fs2TransportFile
 import scopt.OParser
 import scopt.OptionParser
 
-
-
-
 object TodoClient extends IOApp with Config :
   def run(args: List[String]): IO[ExitCode] =
     BlazeClientBuilder[IO].resource.use { client =>
@@ -83,6 +80,14 @@ object TodoClient extends IOApp with Config :
                 yield
                   ExitCode.Success
 
+              case UploadFile(api, path) =>
+                for
+                  port <- client.expect[String](POST(account, api))
+                  _ <- IO.println(port)
+                  _ <- Fs2TransportFile.sendFile[IO](port.toInt, path).compile.drain
+                  _ <- client.expect[String](POST(account, Api.ftpApiClose(port)))
+                yield ExitCode.Success
+
               case UnitCommand() => IO {
                 ExitCode.Success
               }
@@ -111,34 +116,13 @@ object TodoClient extends IOApp with Config :
             } else IO.unit)
             addNotes <- config.addNotes
             changeNotes <- config.changeNotes(notes)
+            uploadFile <- IO(config.uploadFile(account.login))
             _ <- createRequest(addNotes, account)
             _ <- createRequest(changeNotes, account)
-            _ <- IO(args.contains("--uploadFile")).flatMap(if (_) {
-              config.uploadFile(account.login) match {
-                case UploadFile(api, path) =>
-                  for
-                    port <- client.expect[String](POST(account, api))
-                    _ <- IO.println(port)
-                    _ <- Fs2TransportFile.sendFile[IO](port.toInt, path).compile.drain
-                    _ <- client.expect[String](POST(account, Api.ftpApiClose(port)))
-                  yield ExitCode.Success
-                case _ => ???
-              }
-            } else IO.unit)
+            _ <- createRequest(uploadFile, account)
           } yield ExitCode.Success
         case None =>
           ???
       }
 
-
-      //            case UploadFile(openPort, pathToFile, nameFile) =>
-//                    val postOpenPort = POST(Cache.user, openPort)
-//                    val postCloseConnect = (portClose: String) => POST(Cache.user, Api.ftpApiClose(portClose))
-//                    for
-//                      port <- client.expect[String](postOpenPort)
-//                      _ <- IO.println(port)
-//                      _ <- Fs2TransportFile.sendFile[IO](port, pathToFile).compile.drain
-//                      _ <- client.expect[String](postCloseConnect(port))
-//                    yield ExitCode.Success
-      //          }
     }
