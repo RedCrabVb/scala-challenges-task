@@ -26,8 +26,3 @@ final case class Registration(login: String, password: String) extends Command
 
 final case class UnitCommand() extends Command
 
-
-object Cache {
-  var user: Account = _
-  var notes: List[Notes] = _
-}

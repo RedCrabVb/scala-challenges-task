@@ -36,7 +36,7 @@ object DataBase {
   def filterByValue(idUser: Int, filed: String, value: String): doobie.ConnectionIO[List[(Notes, Option[Files])]] = {
     val where = fr"""where idUser = $idUser and""" ++ const(s"$filed = '$value'")
     val select = sql"select * from notes left join files on (notes.id = files.idnotes)"
-    val sql = select ++ where//sql injection
+    val sql = select ++ where//possibly an sql-injection
     sql.query[(Notes, Option[Files])].stream.compile.toList
   }
 

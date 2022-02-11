@@ -26,7 +26,6 @@ import Api.*
 import ru.neoflex.Files
 import com.comcast.ip4s.{Literals, SocketAddress}
 import fs2.io.net.{ConnectException, Network, Socket}
-import ru.neoflex.client.Cache.*
 import ru.neoflex.client.Authorization
 import fs2.{Stream, text}
 import cats.effect.Temporal
@@ -140,17 +139,9 @@ object TodoClient extends IOApp with Config :
           }
 
           for {
-            account <- client.successful(post._1).flatMap(result =>
-              if (result) {
-                post._2
-              } else {
-                ???
-              }
-            )
+            account <- client.successful(post._1).flatMap(if (_) { post._2} else {throw new Exception("Failed to connect")})
             notes <- client.expect[NotesAndFile](GET(account, noteApiLoad))
-            _ <- IO {
-              config.showNotes
-            }.flatMap(if (_) IO.println(UI.printNotes(notes)) else IO.unit)
+            _ <- IO(config.showNotes).flatMap(if (_) IO.println(UI.printNotes(notes)) else IO.unit)
             statusDelete <- IO(config.deleteNote != 0).flatMap {
               if (_) {
                 client.status(POST(account, Api.notesApiDelete(config.deleteNote)))
@@ -188,8 +179,4 @@ object TodoClient extends IOApp with Config :
       //                _ <- client.expect[String](postCloseConnect(port))
       //              yield ExitCode.Success
       //          }
-
-      //          request.unsafeRunSync()
-      //        }
-      //      }
     }

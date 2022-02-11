@@ -25,9 +25,6 @@ trait NotesRoutes:
   val dsl: Http4sDsl[IO] = Http4sDsl[IO]
   import dsl.*
 
-  println(Storage.getNotesWithFilter(Account("", "", 43), "label", "test").unsafeRunSync().mkString(", "))
-
-
   def notesRoutes: HttpRoutes[IO] =
     HttpRoutes.of[IO] {
       case req @ GET -> Root / "note" / "load" =>

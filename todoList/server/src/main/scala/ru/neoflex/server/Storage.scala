@@ -45,13 +45,10 @@ object Storage extends Config:
   }
 
   def deleteNotes(account: Account, id: Int): IO[Int] = {
-    DataBase.deleteNote(id, getIdAccount(account.login, account.password)).run.transact(xa)
+    DataBase.deleteNote(id, account.id).run.transact(xa)
   }
 
-
   def editNotes(account: Account, itemTmp: NotesTmp, id: Int): IO[Int] = {
-    authorization(account)
-
     DataBase.editNote(id, itemTmp.name, itemTmp.text, itemTmp.label, itemTmp.status).run.transact(xa)
   }
 
@@ -76,8 +73,4 @@ object Storage extends Config:
 
   def authorization(account: Account): IO[Account] = {
     DataBase.authorization(account.login, account.password).transact(xa)
-  }
-
-  private def getIdAccount(login: String, password: String): Int = {
-    DataBase.authorization(login, password).transact(xa).unsafeRunSync().id
   }
