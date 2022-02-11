@@ -1,7 +1,7 @@
 package ru.neoflex.client
 
 import cats.effect.IO
-import ru.neoflex.{Notes, NotesTmp}
+import ru.neoflex.{Files, Notes, NotesTmp}
 
 import scala.collection.mutable.ListBuffer
 import scala.io.StdIn.readLine
@@ -37,17 +37,17 @@ object UI {
             _ <- IO.println("Enter label: ")
             value <- IO.readLine
           yield
-            Api.itemApiFilter("label", value)
+            Api.noteApiFilter("label", value)
         case "2" =>
-          IO(Api.itemApiSort("text"))
+          IO(Api.noteApiSort("text"))
         case "3" =>
           for
             _ <- IO.println("Enter status for filter (true/false)")
             statusForFilter <- IO.readLine
           yield
-            Api.itemApiFilter("status", statusForFilter.toLowerCase)
+            Api.noteApiFilter("status", statusForFilter.toLowerCase)
         case "4" =>
-          IO(Api.itemApiSort("text"))
+          IO(Api.noteApiSort("text"))
         case _ => ???
       }
     } yield {
@@ -55,14 +55,16 @@ object UI {
     }
   }
 
-  def editNote(id: Int): IO[Command] = {
+  def editNote(id: Int, note: NotesAndFile): IO[Command] = {
     def changeThisField(field: String, value: => String): IO[Boolean] = {
       for
         _ <- IO.println("Current data: " + value)
-        _ <- IO.println(s"Change $field? true/false (default false)")
+        _ <- IO.println(s"Change $field? y/n (default false)")
         result <- IO {
           Try {
-            readLine().toLowerCase.toBoolean
+            readLine().toLowerCase
+              .replace("y", "true")
+              .replace("n", "false").toBoolean
           } getOrElse {
             false
           }
@@ -89,13 +91,13 @@ object UI {
 
     for {
       note <- IO {
-        Try(Cache.notes.find(_.id == id).head).
-          getOrElse(Notes(id))
+        note.find(_._1.id == id).getOrElse((Notes(), List[Files]()))._1
       }
       name <- getValue("name", note.name, readLine())
       text <- getValue("text", note.text, readLine())
       label <- getValue("label", note.label, readLine())
-      status <- getValue("completed", note.status, readLine().toLowerCase.toBoolean, "(true/false)")
+      status <- getValue("completed", note.status, readLine().toBoolean,
+        "(true/false)")
     } yield {
       EditNote(id, name, text, label, status)
     }
@@ -146,12 +148,7 @@ object UI {
 //            )
 //          }
 //        }
-//        case "9" => IO.delay(Exit())
-//        case _ => IO.delay(NotFoundCommand())
-//      }
-//    } yield {
-//      result
-//    }
+
 //  }
 
   def printNotes(list: List[(Notes, Option[ru.neoflex.Files])]): String = {

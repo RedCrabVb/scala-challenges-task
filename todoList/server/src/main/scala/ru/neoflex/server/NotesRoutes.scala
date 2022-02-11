@@ -18,64 +18,66 @@ import ru.neoflex.server.Storage.xa
 
 import java.util.Date
 
+import cats.effect.unsafe.implicits.global
+
 //fixme: I would like to receive errors from api
 trait NotesRoutes:
   val dsl: Http4sDsl[IO] = Http4sDsl[IO]
   import dsl.*
 
-  def itemsRoutes: HttpRoutes[IO] =
+  println(Storage.getNotesWithFilter(Account("", "", 43), "label", "test").unsafeRunSync().mkString(", "))
+
+
+  def notesRoutes: HttpRoutes[IO] =
     HttpRoutes.of[IO] {
-      case req @ GET -> Root / "itemShow" =>
+      case req @ GET -> Root / "note" / "load" =>
         for
           accountTmp <- req.as[Account]
-          user <- Storage.authorization(accountTmp)
-          items <- Storage.getAllItems(user)
-          resp <- Ok(items)
+          account <- Storage.authorization(accountTmp)
+          notes <- Storage.getAllNotes(account)
+          resp <- Ok(notes)
         yield
           resp
-      case req @ POST -> Root / "item" =>
+      case req @ POST -> Root / "note" / "add" =>
         for
           notes <- req.as[(Account, NotesTmp)]
-          newItem <- Storage.prependNotes(notes._1, notes._2)
-          _ <- IO.println(s"Item add: $newItem")
-          resp <- Ok(newItem)
+          account <- Storage.authorization(notes._1)
+          newnote <- Storage.prependNotes(account, notes._2)
+          _ <- IO.println(s"note add: $newnote")
+          resp <- Ok(newnote)
         yield
           resp
-      case req @ GET -> Root / "item" / "filter" / filter / value =>
+      case req @ GET -> Root / "note" / "filter" / filter / value =>
         for
-          user <- req.as[Account]
-          items <- Storage.getNotesWithLabel(user, filter match {
-            case "label" => (item: Notes) => item.label == value
-            case "status" => (item: Notes) => item.status == value.toBoolean
-          })
-          resp <- Ok(items)
+          accountTmp <- req.as[Account]
+          account <- Storage.authorization(accountTmp)
+          notes <- Storage.getNotesWithFilter(account, filter, value)
+          resp <- Ok(notes)
         yield
           resp
-      case req @ GET -> Root / "item" / "sort" / sort =>
+      case req @ GET -> Root / "note" / "sort" / sort =>
         for
-          user <- req.as[Account]
-          items <- Storage.sortItems(sort match {
-            case "text" => (item: Notes) => item.text
-            case "name" => (item: Notes) => item.name
-            case _ => ???
-          }, null)
-          resp <- Ok(items)
+          accountTmp <- req.as[Account]
+          account <- Storage.authorization(accountTmp)
+          notes <- Storage.sortNotes(sort, account)
+          resp <- Ok(notes)
         yield
           resp
-      case req @ POST -> Root / "item" / "edit" / id =>
+      case req @ POST -> Root / "note" / "edit" / id =>
         for
-          item <- req.as[NotesTmp]
-          _ <- Storage.editItems(item, id.toString.toInt)
-          _ <- IO.println(s"Edit item id: $id")
+          note <- req.as[(Account, NotesTmp)]
+          _ <- Storage.editNotes(note._1, note._2, id.toString.toInt)
+          _ <- IO.println(s"Edit note id: $id")
           resp <- Ok(id)
         yield
           resp
-      case req @ POST -> Root / "item" / "delete" / id =>
+      case req @ POST -> Root / "note" / "delete" / id =>
         for
-          account <- req.as[Account]
-          newItem <- Storage.deleteNotes(account, id.toInt)
-          _ <- IO.println(s"Delete item: $id")
-          resp <- Ok(newItem)
+          accountTmp <- req.as[Account]
+          account <- Storage.authorization(accountTmp)
+          newnote <- Storage.deleteNotes(account, id.toInt)
+          _ <- IO.println(s"Delete note: $id")
+          resp <- Ok(newnote)
         yield
           resp
     }

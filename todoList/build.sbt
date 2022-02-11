@@ -11,7 +11,7 @@ lazy val root = Project(id = "ServerNotes", base = file("."))
   .settings(name := "ServerNotes")
   .aggregate(server, client)
 
-lazy val serverMain = Some("ru.neoflex.server.TodoServer")
+lazy val serverMain = Some("ru.neoflex.server.NotesServer")
 
 lazy val server = (project in file("./server"))
   .enablePlugins(AssemblyPlugin)
@@ -25,7 +25,7 @@ lazy val server = (project in file("./server"))
     libraryDependencies ++= doobie.doobie
   ).dependsOn(core)
 
-lazy val clientMain = Some("ru.neoflex.client.TodoClient")
+lazy val clientMain = Some("ru.neoflex.client.NotesClient")
 
 lazy val client = (project in file("./client"))
   .enablePlugins(AssemblyPlugin)

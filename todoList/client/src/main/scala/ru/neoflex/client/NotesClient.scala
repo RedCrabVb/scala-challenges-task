@@ -38,6 +38,8 @@ import ru.neoflex.fs2.Fs2TransportFile
 import scopt.OParser
 import scopt.OptionParser
 
+type NotesAndFile = List[(Notes, Option[ru.neoflex.Files])]
+
 
 case class ConfigClient(login: String = "None",
                         password: String = "None",
@@ -45,7 +47,10 @@ case class ConfigClient(login: String = "None",
                         authorization: Boolean = false,
                         registration: Boolean = false,
                         addNotes: IO[Command] = IO(UnitCommand()),
-                        changeNotes: IO[Command] = IO(UnitCommand()),
+                        changeNotes: (notes: NotesAndFile) => IO[Command] = (notes: NotesAndFile) => IO(UnitCommand()),
+                        deleteNote: Int = -1,
+                        showWithFilter: (String, String) = ("", ""),
+                        sortByFiled: String = "",
                         loadFile: String = "None")
 
 
@@ -61,8 +66,17 @@ object TodoClient extends IOApp with Config :
           .action((value, config) => config.copy(password = value))
         opt[String]('f', "path").text("send the file to the server, additional data is required")
           .action((value, config) => config.copy(loadFile = value))
+        opt[String]("sort").text("sort notes by filed, example --sort text")
+          .action((value, config) => config.copy(sortByFiled = value))
+        opt[String]("filter").text("show notes with filter, example: --filter status=true (!!!There must be one equal sign!!!)")
+          .action((value, config) => config.copy(showWithFilter = {
+            val str = value.split("=")
+            (str(0), str(1))
+          }))
         opt[Int]('c', "change").text("change notes, enter id")
-          .action((value, config) => config.copy(changeNotes = UI.editNote(value)))
+          .action((value, config) => config.copy(changeNotes = (notes: NotesAndFile) => UI.editNote(value, notes)))
+        opt[Int]('d', "delete").text("delete notes, enter id")
+          .action((value, config) => config.copy(deleteNote = value))
         opt[Unit]('s', "show").text("load and show notes")
           .action((value, config) => config.copy(showNotes = true))
         opt[Unit]("addNotes").text("add notes")
@@ -87,7 +101,9 @@ object TodoClient extends IOApp with Config :
 
           def sendUser(api: Uri, login: String, password: String) = {
             val account = Account(login, password)
-            (POST(account, api), IO{account})
+            (POST(account, api), IO {
+              account
+            })
           }
 
           val post = if (config.registration) {
@@ -102,7 +118,7 @@ object TodoClient extends IOApp with Config :
             command match
               case SendNote(name, text, label) =>
                 val item = NotesTmp(name, text, label, false)
-                val postNotesAdd = POST((account, item), itemApiAdd)
+                val postNotesAdd = POST((account, item), noteApiAdd)
                 for
                   status <- client.status(postNotesAdd)
                   _ <- IO.println(s"Status: $status")
@@ -110,18 +126,20 @@ object TodoClient extends IOApp with Config :
                   ExitCode.Success
 
               case EditNote(id, name, text, label, status) =>
-                val updateNote = NotesTmp(name, text, label, status)
-                val editNote = POST(updateNote, itemApiEdit(id))
+                val updateNote = (account, NotesTmp(name, text, label, status))
+                val editNote = POST(updateNote, noteApiEdit(id))
                 for
                   status <- client.status(editNote)
                   _ <- IO.println(s"Status: $status")
                 yield
                   ExitCode.Success
 
-              case UnitCommand() => IO{ExitCode.Success}
+              case UnitCommand() => IO {
+                ExitCode.Success
+              }
           }
 
-          val request: IO[ExitCode] = for {
+          for {
             account <- client.successful(post._1).flatMap(result =>
               if (result) {
                 post._2
@@ -129,73 +147,49 @@ object TodoClient extends IOApp with Config :
                 ???
               }
             )
-            notes <- client.expect[List[(Notes, Option[ru.neoflex.Files])]](GET(account, itemApiShow))
-            _ <- IO{config.showNotes}.flatMap(result =>
-              if(result) IO.println(UI.printNotes(notes)) else IO.unit
-            )
+            notes <- client.expect[NotesAndFile](GET(account, noteApiLoad))
+            _ <- IO {
+              config.showNotes
+            }.flatMap(if (_) IO.println(UI.printNotes(notes)) else IO.unit)
+            statusDelete <- IO(config.deleteNote != 0).flatMap {
+              if (_) {
+                client.status(POST(account, Api.notesApiDelete(config.deleteNote)))
+              } else IO.unit
+            }
+            _ <- IO(config.sortByFiled.nonEmpty).flatMap(if (_) {
+              for
+                sortNote <- client.expect[NotesAndFile](GET(account, Api.noteApiSort(config.sortByFiled)))
+                _ <- IO.println(UI.printNotes(sortNote))
+              yield ()
+            } else IO.unit)
+            _ <- IO(config.showWithFilter._1.nonEmpty).flatMap(if (_) {
+              for
+                sortNote <- client.expect[NotesAndFile](GET(account, Api.noteApiFilter(config.showWithFilter._1, config.showWithFilter._2)))
+                _ <- IO.println(UI.printNotes(sortNote))
+              yield ()
+            } else IO.unit)
             addNotes <- config.addNotes
-            changeNotes <- config.changeNotes
+            changeNotes <- config.changeNotes(notes)
             _ <- createRequest(addNotes, account)
             _ <- createRequest(changeNotes, account)
           } yield ExitCode.Success
-
-          request
         case None =>
           ???
       }
 
-//      breakable {
-//        while (false) {
-//          val command = UI.selectOperation().unsafeRunSync()
-//          val request: IO[ExitCode] = command match {
-//            case SendNote(name, text, label) =>
-//              val item = NotesTmp(name, text, label, false)
-//              val postNotesAdd = POST((user, item), itemApiAdd)
-//              for
-//                status <- client.status(postNotesAdd)
-//                _ <- IO.println(s"Status: $status")
-//              yield
-//                ExitCode.Success
-//
-//
-//            case EditNote(id, name, text, label, status) =>
-//              val updateNote = NotesTmp(name, text, label, status)
-//
-//              val editNote = POST(updateNote, itemApiEdit(id))
-//
-//              for
-//                status <- client.status(editNote)
-//                _ <- IO.println(s"Status: $status")
-//              yield
-//                ExitCode.Success
-//
-//            case ShowNoteFilter(api) =>
-//              val postShowItem = GET(user, api)
-//
-//              for {
-//                list <- client.expect[List[(Notes, Option[ru.neoflex.Files])]](postShowItem)
-//                _ <- IO.println(UI.printNotes(list))
-//              } yield ExitCode.Success
 
-//            case Delete(id) =>
-//              val postDeleteItem = POST(user, Api.itemApiDelete(id))
-//              for {
-//                status <- client.status(postDeleteItem)
-//                _ <- IO.println(s"Status: $status")
-//              } yield ExitCode.Success
-//
-//            case UploadFile(openPort, pathToFile, nameFile) =>
-//              val postOpenPort = POST(Cache.user, openPort)
-//              val postCloseConnect = (portClose: String) => POST(Cache.user, Api.ftpApiClose(portClose))
-//              for
-//                port <- client.expect[String](postOpenPort)
-//                _ <- IO.println(port)
-//                _ <- Fs2TransportFile.sendFile[IO](port, pathToFile).compile.drain
-//                _ <- client.expect[String](postCloseConnect(port))
-//              yield ExitCode.Success
-//          }
+      //            case UploadFile(openPort, pathToFile, nameFile) =>
+      //              val postOpenPort = POST(Cache.user, openPort)
+      //              val postCloseConnect = (portClose: String) => POST(Cache.user, Api.ftpApiClose(portClose))
+      //              for
+      //                port <- client.expect[String](postOpenPort)
+      //                _ <- IO.println(port)
+      //                _ <- Fs2TransportFile.sendFile[IO](port, pathToFile).compile.drain
+      //                _ <- client.expect[String](postCloseConnect(port))
+      //              yield ExitCode.Success
+      //          }
 
-//          request.unsafeRunSync()
-//        }
-//      }
+      //          request.unsafeRunSync()
+      //        }
+      //      }
     }

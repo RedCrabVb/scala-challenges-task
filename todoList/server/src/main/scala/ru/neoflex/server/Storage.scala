@@ -31,41 +31,37 @@ object Storage extends Config:
   )
 
 
+
   def addFile(id: Int, nameFile: String, account: Account): IO[Unit] = {
     IO{???}
   }
 
-  //  def getItemByIdAndSession(id: Int, session: String): Notes = {
-  //    ???
-  //  }
-
-
-  def getAllItems(account: Account): IO[List[(Notes, Option[Files])]] = {
+  def getAllNotes(account: Account): IO[List[(Notes, Option[Files])]] = {
     DataBase.getAllNotes(account.id).transact(xa)
   }
 
-  def getNotesWithLabel(account: Account, filter: Notes => Boolean): IO[List[(Notes, Option[Files])]] = {
-//    DataBase.getAllNotes(account.id).transact(xa)
-    IO{???}
-  }
-
   def prependNotes(account: Account, notes: NotesTmp) = {
-    DataBase.addNote(getIdAccount(account.login, account.password), notes).run.transact(xa)
+    DataBase.addNote(account.id, notes).run.transact(xa)
   }
 
-  def deleteNotes(Account: Account, id: Int): IO[Unit] = {
-    IO{???}
+  def deleteNotes(account: Account, id: Int): IO[Int] = {
+    DataBase.deleteNote(id, getIdAccount(account.login, account.password)).run.transact(xa)
   }
 
 
-  def editItems(itemTmp: NotesTmp, id: Int): IO[Int] = {
+  def editNotes(account: Account, itemTmp: NotesTmp, id: Int): IO[Int] = {
+    authorization(account)
+
     DataBase.editNote(id, itemTmp.name, itemTmp.text, itemTmp.label, itemTmp.status).run.transact(xa)
   }
 
-  def sortItems(f: Notes => String, session: String): IO[List[Notes]] = {
-    IO{???}
+  def sortNotes(field: String, account: Account): IO[List[(Notes, Option[Files])]] = {
+    DataBase.sortByFiled(account.id, "notes." + field).transact(xa)
   }
 
+  def getNotesWithFilter(account: Account, filed: String,  value: String): IO[List[(Notes, Option[Files])]] = {
+    DataBase.filterByValue(account.id, "notes." + filed, value).transact(xa)
+  }
 
   def registration(account: Account): IO[Unit] = {
     import java.nio.file.Files

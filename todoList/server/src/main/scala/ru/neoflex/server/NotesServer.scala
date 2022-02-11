@@ -28,7 +28,7 @@ object NotesServer extends IOApp with NotesRoutes with Config:
   Files.createDirectories(Paths.get(userFolder))
 
   val app = (
-    itemsRoutes <+>
+    notesRoutes <+>
       authorizationRoutes <+>
       ftpRoutes
     ).orNotFound
