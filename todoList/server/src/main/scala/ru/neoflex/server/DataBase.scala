@@ -21,6 +21,10 @@ object DataBase {
   def deleteNote(id: Int, idUser: Int): doobie.Update0 = {
     sql"""delete from notes where id = $id and idUser = $idUser""".update
   }
+  
+  def addFile(idNote: Int, nameFile: String): doobie.Update0 = {
+    sql"insert into files (idnotes, name) values ($idNote, $nameFile);".update
+  }
 
 
   def addNote(idUser: Int, notesTmp: NotesTmp): doobie.Update0 = {

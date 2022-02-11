@@ -21,7 +21,7 @@ object UI {
       SendNote(name, text, label)
   }
 
-  def editNote(id: Int, note: NotesAndFile): IO[Command] = {
+  def editNote(id: Int, note: ru.neoflex.client.NotesAndFile): IO[Command] = {
     def changeThisField(field: String, value: => String): IO[Boolean] = {
       for
         _ <- IO.println("Current data: " + value)

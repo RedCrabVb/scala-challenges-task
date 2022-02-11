@@ -19,7 +19,7 @@ object Api {
 
   def noteApiFilter(filter: String, value: String): Uri = uri(baseUrl + s"/note/filter/$filter/$value")
 
-  def ftpApi(id: String, nameFile: String, user: String): Uri = uri(baseUrl + s"/ftp/$user/$id/$nameFile")
+  def ftpApi(id: Int, nameFile: String, user: String): Uri = uri(baseUrl + s"/ftp/$user/$id/$nameFile")
 
   def ftpApiClose(port: String): Uri = uri(baseUrl + s"/ftp/$port")
 }

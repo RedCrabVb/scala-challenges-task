@@ -32,8 +32,8 @@ object Storage extends Config:
 
 
 
-  def addFile(id: Int, nameFile: String, account: Account): IO[Unit] = {
-    IO{???}
+  def addFile(idNotes: Int, nameFile: String): IO[Int] = {
+    DataBase.addFile(idNotes, nameFile).run.transact(xa)
   }
 
   def getAllNotes(account: Account): IO[List[(Notes, Option[Files])]] = {

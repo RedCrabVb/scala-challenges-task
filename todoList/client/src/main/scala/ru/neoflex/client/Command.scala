@@ -18,7 +18,7 @@ final case class Delete(id: Int) extends Command
 
 final case class RemoveFile() extends Command
 
-final case class UploadFile(openPort: Uri, nameFile: String, pathFile: String) extends Command
+final case class UploadFile(apiForOpenPort: Uri, pathFile: String) extends Command
 
 final case class Authorization(login: String, password: String) extends Command
 

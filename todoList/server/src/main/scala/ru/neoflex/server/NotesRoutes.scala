@@ -106,17 +106,16 @@ trait NotesRoutes:
         for
           account <- req.as[Account]
           port <- IO(Fs2TransportFile.blockPort(nameFile, account))
-          _ <- IO(Storage.addFile(id.toInt, nameFile, account))
+          _ <- Storage.addFile(id.toInt, nameFile)
           _ <- IO.println(s"save file ${account.login} on port: $port")
           resp <- Ok(port)
         yield
           resp
       case req @ POST -> Root / "ftp" / port =>
         for
-          user <- req.as[Account]
-          _ <- IO{
-            Fs2TransportFile.unblockPort(port, user)
-          }
+          accountTmp <- req.as[Account]
+          account <- Storage.authorization(accountTmp)
+          _ <- Fs2TransportFile.unblockPort(port)
           resp <- Ok(port)
         yield
           resp
