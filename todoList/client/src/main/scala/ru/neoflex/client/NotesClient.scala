@@ -85,6 +85,7 @@ object NotesClient extends IOApp with Config :
                   port <- client.expect[String](POST(account, api))
                   _ <- IO.println(port)
                   _ <- Fs2TransportFile.sendFile[IO](port.toInt, path).compile.drain
+                  _ <- IO.sleep(10.seconds)
                   _ <- client.expect[String](POST(account, Api.ftpApiClose(port)))
                 yield ExitCode.Success
 

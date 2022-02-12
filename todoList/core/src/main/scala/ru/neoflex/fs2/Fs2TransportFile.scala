@@ -43,7 +43,7 @@ object Fs2TransportFile extends Config {
       client.reads
         .through(Files[F].writeAll(out))
         .handleErrorWith(_ => Stream.empty)
-    }.parJoin(10).interruptWhen(interrupter)
+    }.parJoin(100).interruptWhen(interrupter)
 
   def connect[F[_]: Temporal: Network](address: com.comcast.ip4s.SocketAddress[com.comcast.ip4s.Host]): Stream[F, Socket[F]] =
     Stream.resource(Network[F].client(address))
