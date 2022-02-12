@@ -1,5 +1,6 @@
-import Dependency.version.{doobieVersion, scala3Version}
-import Dependency.{circe, doobie, fs2, http4s, scopt}
+import Dependency.version.scala3Version
+import Dependency.{circe, doobie, fs2, http4s, scalaTest, scopt}
+import sbt._
 
 ThisBuild / version := "0.1.0-SNAPSHOT"
 
@@ -22,7 +23,8 @@ lazy val server = (project in file("./server"))
     libraryDependencies ++= http4s.http4s,
     libraryDependencies ++= circe.circe,
     libraryDependencies ++= fs2.fs2,
-    libraryDependencies ++= doobie.doobie
+    libraryDependencies ++= doobie.doobie,
+    libraryDependencies += scalaTest.scalaTest
   ).dependsOn(core)
 
 lazy val clientMain = Some("ru.neoflex.client.NotesClient")
@@ -36,7 +38,8 @@ lazy val client = (project in file("./client"))
     libraryDependencies ++= http4s.http4s,
     libraryDependencies ++= circe.circe,
     libraryDependencies ++= fs2.fs2,
-    libraryDependencies += scopt.scopt
+    libraryDependencies += scopt.scopt,
+    libraryDependencies += scalaTest.scalaTest
   ).dependsOn(core)
 
 lazy val core = (project in file("./core"))

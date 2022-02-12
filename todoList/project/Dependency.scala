@@ -1,4 +1,4 @@
-import Dependency.version.{circeVersion, doobieVersion, fs2CoreVersion, http4sVersion, scoptVersion}
+import Dependency.version.{circeVersion, doobieVersion, fs2CoreVersion, http4sVersion, scalaTestVersion, scoptVersion}
 import sbt._
 
 object Dependency {
@@ -9,6 +9,7 @@ object Dependency {
     val circeVersion = "0.14.1"
     val doobieVersion = "1.0.0-RC2"
     val scoptVersion = "4.0.1"
+    val scalaTestVersion = "3.2.10"
   }
 
   object http4s {
@@ -43,5 +44,9 @@ object Dependency {
 
   object scopt {
     val scopt = "com.github.scopt" %% "scopt" % scoptVersion
+  }
+
+  object scalaTest {
+    val scalaTest = "org.scalatest" %% "scalatest" % scalaTestVersion % Test
   }
 }

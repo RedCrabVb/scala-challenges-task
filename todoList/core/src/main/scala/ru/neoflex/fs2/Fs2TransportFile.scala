@@ -13,7 +13,6 @@ import cats.effect.unsafe.implicits.global
 import scala.collection.mutable
 import scala.concurrent.duration.*
 
-//todo: remove file, download file
 object Fs2TransportFile extends Config {
   private val ftpPortAndPath: mutable.Map[Int, Path] = {
     val map = scala.collection.mutable.Map(5555 -> Path("userFolder/error"))
