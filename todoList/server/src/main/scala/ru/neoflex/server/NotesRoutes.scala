@@ -102,7 +102,7 @@ trait NotesRoutes:
 
   def ftpRoutes: HttpRoutes[IO] =
     HttpRoutes.of[IO] {
-      case req @ POST -> Root / "ftp" / userName / id / nameFile =>
+      case req @ POST -> Root / "ftp" / id / nameFile =>
         for
           account <- req.as[Account]
           port <- IO(Fs2TransportFile.blockPort(nameFile, account))

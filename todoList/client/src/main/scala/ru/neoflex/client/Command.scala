@@ -37,12 +37,11 @@ sealed trait Command {
   def createRequest(client: Client[IO], account: Account): IO[ExitCode]
 }
 
-final case class SendNote(name: String, text: String, label: String) extends Command {
+final case class SendNote() extends Command {
   def createRequest(client: Client[IO], account: Account): IO[ExitCode] = {
-    val item = NotesTmp(name, text, label, false)
-    val postNotesAdd = POST((account, item), noteApiAdd)
     for
-      status <- client.status(postNotesAdd)
+      notes <- UI.addNote()
+      status <- client.status(POST((account, notes), noteApiAdd))
       _ <- IO.println(s"Status: $status")
     yield
       ExitCode.Success
@@ -76,12 +75,12 @@ final case class ShowNoteSort(api: Uri) extends Command {
   }
 }
 
-final case class EditNote(id: Int, name: String, text: String, label: String, status: Boolean) extends Command {
+final case class EditNote(id: Int) extends Command {
   def createRequest(client: Client[IO], account: Account): IO[ExitCode] = {
-    val updateNote = (account, NotesTmp(name, text, label, status))
-    val editNote = POST(updateNote, noteApiEdit(id))
     for
-      status <- client.status(editNote)
+      notes <- client.expect[ru.neoflex.client.NotesAndFile](GET(account, noteApiLoad))
+      notesTmp <- UI.editNote(id, notes)
+      status <- client.status(POST((account, notesTmp), noteApiEdit(id)))
       _ <- IO.println(s"Status: $status")
     yield
       ExitCode.Success
@@ -120,7 +119,4 @@ final case class Registration(login: String, password: String) extends Command {
   def createRequest(client: Client[IO], account: Account): IO[ExitCode] = ???
 }
 
-final case class UnitCommand() extends Command {
-  def createRequest(client: Client[IO], account: Account): IO[ExitCode] = ???
-}
 

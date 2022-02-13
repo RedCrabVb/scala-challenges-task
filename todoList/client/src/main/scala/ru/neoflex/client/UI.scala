@@ -9,7 +9,7 @@ import scala.util.Try
 import scala.util.hashing.Hashing.Default
 
 object UI {
-  def addNote(): IO[Command] = {
+  def addNote(): IO[NotesTmp] = {
     for
       _ <- IO.println("Enter name note")
       name <- IO.readLine
@@ -18,10 +18,10 @@ object UI {
       _ <- IO.println("Enter label note")
       label <- IO.readLine
     yield
-      SendNote(name, text, label)
+      NotesTmp(name, text, label, false)
   }
 
-  def editNote(id: Int, note: ru.neoflex.client.NotesAndFile): IO[Command] = {
+  def editNote(id: Int, note: ru.neoflex.client.NotesAndFile): IO[NotesTmp] = {
     def changeThisField(field: String, value: => String): IO[Boolean] = {
       for
         _ <- IO.println("Current data: " + value)
@@ -48,16 +48,14 @@ object UI {
     }
 
     for {
-      note <- IO {
-        note.find(_._1.id == id).getOrElse((Notes(), List[Files]()))._1
-      }
+      note <- IO(note.find(_._1.id == id).getOrElse((Notes(), List[Files]()))._1)
       name <- getValue("name", note.name, readLine())
       text <- getValue("text", note.text, readLine())
       label <- getValue("label", note.label, readLine())
       status <- getValue("completed", note.status, readLine().toBoolean,
         "(true/false)")
     } yield {
-      EditNote(id, name, text, label, status)
+      NotesTmp(name, text, label, status)
     }
   }
 

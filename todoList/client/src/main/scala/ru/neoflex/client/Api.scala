@@ -7,8 +7,11 @@ object Api {
   val uri: String => Uri = Uri.fromString(_).getOrElse(???)
 
   val registrationApi: Uri = uri(s"$baseUrl/registration")
+
   val authorizationApi: Uri = uri(s"$baseUrl/authorization")
+
   val noteApiAdd: Uri = uri(s"$baseUrl/note/add")
+
   val noteApiLoad: Uri = uri(s"$baseUrl/note/load")
 
   def notesApiDelete(id: Int): Uri = uri(s"$baseUrl/note/delete/$id")
@@ -19,7 +22,7 @@ object Api {
 
   def noteApiFilter(filter: String, value: String): Uri = uri(s"$baseUrl/note/filter/$filter/$value")
 
-  def ftpApi(id: Int, nameFile: String, user: String): Uri = uri(s"$baseUrl/ftp/$user/$id/$nameFile")
+  def ftpApi(id: Int, nameFile: String): Uri = uri(s"$baseUrl/ftp/$id/$nameFile")
 
   def ftpApiClose(port: String): Uri = uri(s"$baseUrl/ftp/$port")
 }
