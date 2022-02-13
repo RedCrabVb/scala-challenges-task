@@ -20,7 +20,6 @@ import java.util.Date
 
 import cats.effect.unsafe.implicits.global
 
-//fixme: I would like to receive errors from api
 trait NotesRoutes:
   val dsl: Http4sDsl[IO] = Http4sDsl[IO]
   import dsl.*
@@ -30,7 +29,7 @@ trait NotesRoutes:
       case req @ GET -> Root / "note" / "load" =>
         for
           accountTmp <- req.as[Account]
-          account <- Storage.authorization(accountTmp)
+          account <- Storage.authentication(accountTmp)
           notes <- Storage.getAllNotes(account)
           resp <- Ok(notes)
         yield
@@ -38,7 +37,7 @@ trait NotesRoutes:
       case req @ POST -> Root / "note" / "add" =>
         for
           notes <- req.as[(Account, NotesTmp)]
-          account <- Storage.authorization(notes._1)
+          account <- Storage.authentication(notes._1)
           newnote <- Storage.prependNotes(account, notes._2)
           _ <- IO.println(s"note add: $newnote")
           resp <- Ok(newnote)
@@ -47,7 +46,7 @@ trait NotesRoutes:
       case req @ GET -> Root / "note" / "filter" / filter / value =>
         for
           accountTmp <- req.as[Account]
-          account <- Storage.authorization(accountTmp)
+          account <- Storage.authentication(accountTmp)
           notes <- Storage.getNotesWithFilter(account, filter, value)
           resp <- Ok(notes)
         yield
@@ -55,7 +54,7 @@ trait NotesRoutes:
       case req @ GET -> Root / "note" / "sort" / sort =>
         for
           accountTmp <- req.as[Account]
-          account <- Storage.authorization(accountTmp)
+          account <- Storage.authentication(accountTmp)
           notes <- Storage.sortNotes(sort, account)
           resp <- Ok(notes)
         yield
@@ -71,7 +70,7 @@ trait NotesRoutes:
       case req @ POST -> Root / "note" / "delete" / id =>
         for
           accountTmp <- req.as[Account]
-          account <- Storage.authorization(accountTmp)
+          account <- Storage.authentication(accountTmp)
           _ <- Storage.deleteNotes(account, id.toInt)
           _ <- IO.println(s"Delete note: $id")
           resp <- Ok(id)
@@ -85,7 +84,7 @@ trait NotesRoutes:
       case req @ POST -> Root / "authorization" =>
         for
           account <- req.as[Account]
-          result <- Storage.authorization(account)
+          result <- Storage.authentication(account)
           _ <- IO.println(s"authorization for $result")
           resp <- Ok(result)
         yield
@@ -114,7 +113,7 @@ trait NotesRoutes:
       case req @ POST -> Root / "ftp" / port =>
         for
           accountTmp <- req.as[Account]
-          account <- Storage.authorization(accountTmp)
+          account <- Storage.authentication(accountTmp)
           _ <- Fs2TransportFile.unblockPort(port)
           resp <- Ok(port)
         yield

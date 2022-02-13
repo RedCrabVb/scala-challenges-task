@@ -19,7 +19,7 @@ class StorageTests extends AnyFlatSpec with should.Matchers:
   "storage" should "registration user" in {
     val account = Account("New_user", "for test")
     Storage.registration(account).unsafeRunSync()
-    val result: Int = Storage.authorization(account).unsafeRunSync().id
+    val result: Int = Storage.authentication(account).unsafeRunSync().id
     (sql"delete from account where id = $result".update).run.transact(Storage.xa).unsafeRunSync()
     (result > 0) should equal(true)
   }
