@@ -26,15 +26,7 @@ object UI {
       for
         _ <- IO.println("Current data: " + value)
         _ <- IO.println(s"Change $field? y/n (default false)")
-        result <- IO {
-          Try {
-            readLine().toLowerCase
-              .replace("y", "true")
-              .replace("n", "false").toBoolean
-          } getOrElse {
-            false
-          }
-        }
+        result <- IO.delay(readLine().toLowerCase == "y")
       yield
         result
     }
@@ -70,13 +62,11 @@ object UI {
   }
 
   def printNotes(listUncompressed: List[(Notes, Option[Files])]): String = {
-    var list = List[(Notes, List[Option[Files]])]()//fixme: переписать этот код в адекватном состояние
-    listUncompressed.foreach(e => if (!list.exists(_._1.id == e._1.id)) {
-      list = (e._1, List(e._2)) :: list
-    } else {
-      val addE: List[Option[Files]] = list.find(_._1.id == e._1.id).get._2 ++ List(e._2)
-      list = (e._1, addE) :: list.filter(_._1.id != e._1.id)
-    })
+    val list = listUncompressed.groupMapReduce(_._1.id) {
+      case (n, fs) => (n, fs.toList)
+    } {
+      case ((notes, fs1), (_, fs2)) => (notes, fs2 ::: fs1)
+    }.valuesIterator
 
     "\n\n\n\n\n\n\n-----------------\n" + (for ((item, files) <- list) yield {
       s"""id: ${item.id}

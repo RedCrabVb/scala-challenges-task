@@ -72,9 +72,9 @@ trait NotesRoutes:
         for
           accountTmp <- req.as[Account]
           account <- Storage.authorization(accountTmp)
-          newnote <- Storage.deleteNotes(account, id.toInt)
+          _ <- Storage.deleteNotes(account, id.toInt)
           _ <- IO.println(s"Delete note: $id")
-          resp <- Ok(newnote)
+          resp <- Ok(id)
         yield
           resp
     }

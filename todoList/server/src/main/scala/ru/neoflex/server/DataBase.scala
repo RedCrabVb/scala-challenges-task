@@ -32,19 +32,22 @@ object DataBase {
          values ($idUser, ${notesTmp.name}, ${notesTmp.text}, ${notesTmp.label}, ${notesTmp.status})""".update
   }
 
-  def sortByFiled(idUser: Int, filed: String): doobie.ConnectionIO[List[(Notes, Option[Files])]] = {
+  def sortByFiled(idUser: Int, filed: String):
+  doobie.ConnectionIO[List[(Notes, Option[Files])]] = {
     sql"""select * from notes left join files on (notes.id = files.idnotes) where idUser = $idUser order by $filed"""
       .query[(Notes, Option[Files])].stream.compile.toList
   }
 
-  def filterByValue(idUser: Int, filed: String, value: String): doobie.ConnectionIO[List[(Notes, Option[Files])]] = {
+  def filterByValue(idUser: Int, filed: String, value: String):
+  doobie.ConnectionIO[List[(Notes, Option[Files])]] = {
     val where = fr"""where idUser = $idUser and""" ++ const(s"$filed = '$value'")
     val select = sql"select * from notes left join files on (notes.id = files.idnotes)"
     val sql = select ++ where//possibly an sql-injection
     sql.query[(Notes, Option[Files])].stream.compile.toList
   }
 
-  def editNote(id: Int, name: String, text: String, label: String, status: Boolean): doobie.Update0 = {
+  def editNote(id: Int, name: String, text: String, label: String, status: Boolean):
+  doobie.Update0 = {
     sql"""update Notes set name = $name, text = $text, label = $label, status = $status where id = $id""".update
   }
 
