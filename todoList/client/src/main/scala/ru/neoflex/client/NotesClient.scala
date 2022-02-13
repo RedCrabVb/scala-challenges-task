@@ -60,8 +60,7 @@ object NotesClient extends IOApp with Config :
             notes <- client.expect[ru.neoflex.client.NotesAndFile](GET(account, noteApiLoad))
             _ <- config.command.map(_.createRequest(client, account)).sequence
           } yield ExitCode.Success
-        case None =>
-          ???
+        case None => IO{ExitCode.Error}
       }
 
     }

@@ -60,6 +60,8 @@ object ConfigParser {
         |* attach to notes big files
         |* authorization and registration
         |""".stripMargin)
+
+    override def showUsageOnError = Some(true)
   }
 
 }
