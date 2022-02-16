@@ -35,30 +35,14 @@ object NotesClient extends IOApp with Config :
   def run(args: List[String]): IO[ExitCode] =
     BlazeClientBuilder[IO].resource.use { client =>
 
-      ConfigParser().parse(args, ConfigCommand()) match {
-        case Some(config) =>
-          println(config)
-
-          def sendUser(api: Uri, login: String, password: String) = {
-            val account = Account(login, password)
-            (POST(account, api), IO {
-              account
-            })
-          }
-
-          val post = if (config.registration) {
-            sendUser(registrationApi, config.login, config.password)
-          } else if (config.authorization) {
-            sendUser(authorizationApi, config.login, config.password)
-          } else {
-            throw new Exception("Select the connection option (authorization or registration)")
-          }
-
+      ConfigParser().parse(args, CommandFromConfig()) match {
+        case Some(commands) =>
+          println(commands)
 
           for {
-            account <- client.successful(post._1).flatMap(if (_) { post._2} else {throw new Exception("Failed to connect")})
-            notes <- client.expect[ru.neoflex.client.NotesAndFile](GET(account, noteApiLoad))
-            _ <- config.command.map(_.createRequest(client, account)).sequence
+            account <- IO(Account(commands.login.get, commands.password.get))
+            _ <- commands.connectionStart.createRequest(client, account)
+            _ <- commands.command.map(_.createRequest(client, account)).reverse.sequence
           } yield ExitCode.Success
         case None => IO{ExitCode.Error}
       }

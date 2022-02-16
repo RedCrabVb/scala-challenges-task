@@ -95,10 +95,6 @@ final case class Delete(id: Int) extends Command {
   }
 }
 
-final case class RemoveFile() extends Command {
-  def createRequest(client: Client[IO], account: Account): IO[ExitCode] = ???
-}
-
 final case class UploadFile(api: Uri, pathFile: String) extends Command {
   def createRequest(client: Client[IO], account: Account): IO[ExitCode] = {
     for
@@ -111,12 +107,20 @@ final case class UploadFile(api: Uri, pathFile: String) extends Command {
   }
 }
 
-final case class Authorization(login: String, password: String) extends Command {
-  def createRequest(client: Client[IO], account: Account): IO[ExitCode] = ???
+final case class Authorization() extends Command {
+  def createRequest(client: Client[IO], account: Account): IO[ExitCode] = {
+    for
+      account <- client.expect[Account](POST(account, authorizationApi))
+    yield ExitCode.Success
+  }
 }
 
-final case class Registration(login: String, password: String) extends Command {
-  def createRequest(client: Client[IO], account: Account): IO[ExitCode] = ???
+final case class Registration() extends Command {
+  def createRequest(client: Client[IO], account: Account): IO[ExitCode] = {
+    for
+      account <- client.expect[Account](POST(account, registrationApi))
+    yield ExitCode.Success
+  }
 }
 
 

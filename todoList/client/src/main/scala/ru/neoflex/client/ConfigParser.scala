@@ -7,23 +7,22 @@ import ru.neoflex.client.{UploadFile, ShowNoteSort, ShowNoteFilter}
 
 type NotesAndFile = List[(Notes, Option[ru.neoflex.Files])]
 
-case class ConfigCommand(
-                          login: String = "None",
-                          password: String = "None",
-                          authorization: Boolean = false,
-                          registration: Boolean = false,
+case class CommandFromConfig(
+                          login: Option[String] = Some(null),
+                          password: Option[String] = Some(null),
+                          connectionStart: Command = Authorization(),
                           command: List[Command] = List(),
                           uiCommand: List[IO[Command]] = List()
                         )
 
 object ConfigParser {
-  def apply(): OptionParser[ConfigCommand] = new OptionParser[ConfigCommand]("client for REST") {
+  def apply(): OptionParser[CommandFromConfig] = new OptionParser[CommandFromConfig]("client for REST") {
     head("ru/neoflex/client", "2.x")
 
     opt[String]('l', "login").text("login for service")
-      .action((value, config) => config.copy(value))
+      .action((value, config) => config.copy(login = Option(value)))
     opt[String]('p', "password").text("password for service")
-      .action((value, config) => config.copy(password = value))
+      .action((value, config) => config.copy(password = Option(value)))
 
 
     opt[String]("sort").text("sort notes by filed, example --sort text")
@@ -43,15 +42,15 @@ object ConfigParser {
       .action((value, config) => config.copy(command = ShowNote() :: config.command))
     opt[Seq[String]]('s', "uploadFile").text("enter path to file and name file on server, example: --uploadFile 33,local.txt,server.txt")
       .action((value, config) => {
-        config.copy(command = (UploadFile(Api.ftpApi(value(0).toInt, value(2)), value(1)) :: config.command))
+        config.copy(command = UploadFile(Api.ftpApi(value.head.toInt, value(2)), value(1)) :: config.command)
       }
       )
     opt[Unit]("addNotes").text("add notes")
-      .action((value, config) => config.copy(command = (SendNote() :: config.command)))
+      .action((value, config) => config.copy(command = SendNote() :: config.command))
     opt[Unit]('a', "authorization").text("authorization attempt")
-      .action((value, config) => config.copy(authorization = true))
+      .action((value, config) => config.copy(connectionStart = Authorization()))
     opt[Unit]('r', "registration").text("registration attempt")
-      .action((value, config) => config.copy(registration = true))
+      .action((value, config) => config.copy(connectionStart = Registration()))
 
     help("help").text(
       """
@@ -61,7 +60,7 @@ object ConfigParser {
         |* authorization and registration
         |""".stripMargin)
 
-    override def showUsageOnError = Some(true)
+    override def showUsageOnError: Option[Boolean] = Some(true)
   }
 
 }
